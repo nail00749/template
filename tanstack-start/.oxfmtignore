@@ -1,0 +1,10 @@
+.output/
+dist/
+node_modules/
+bun.lock
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+src/routeTree.gen.ts
+src/features/*/api/endpoints/
+src/features/*/api/model/

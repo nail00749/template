@@ -1,0 +1,22 @@
+# Local HTTPS entrypoints for development.
+# Add to /etc/hosts before running:
+# 127.0.0.1 proback.localhost
+#
+# Via Docker Compose (recommended):
+#   docker compose -f docker/dev/docker-compose.yml up
+#
+# Or standalone with local Caddy:
+#   caddy run --config docker/dev/Caddyfile
+#
+# Standalone: reverse_proxy targets use 127.0.0.1 / LAN IP.
+# Docker Compose: reverse_proxy targets use service names (app, backend).
+# The ${BACKEND_ADDR} fallback below covers both cases.
+
+https://proback.localhost {
+	tls internal
+
+	@api path /api/* /auth/*
+	reverse_proxy @api {$BACKEND_ADDR:192.168.1.87:8000}
+
+	reverse_proxy {$FRONTEND_ADDR:127.0.0.1:3000}
+}

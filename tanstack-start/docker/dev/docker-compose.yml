@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile
+    container_name: app-dev
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8002}
+      # Включает polling для отслеживания изменений файлов в Docker
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      # Монтируем исходники — изменения сразу отражаются в контейнере
+      - ../..:/app
+      # Изолируем node_modules контейнера от хоста
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - dev-network
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-dev
+    profiles:
+      - caddy
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - FRONTEND_ADDR=app:3000
+      - BACKEND_ADDR=${BACKEND_ADDR:-192.168.1.87:8000}
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - dev-network
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  dev-network:
+    driver: bridge
