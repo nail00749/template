@@ -29,8 +29,8 @@ Keep types explicit for list queries and filters as well:
 ```text
 DocumentListQuery
   page: integer, optional
-  limit: integer, optional
-  search: string, optional
+  per_page: integer, optional
+  q: string, optional
   status: DocumentStatus, optional
   ownerId: identifier, optional
 ```
@@ -58,8 +58,14 @@ short task description; omit it only when the domain explicitly requires it.
 
 ## 3. List Endpoints
 
-Every list endpoint must support pagination. For JSON APIs, the response has a
-stable shape:
+Every list endpoint must support pagination. Use these standard query parameter
+names everywhere:
+
+- `page` — 1-based page number;
+- `per_page` — number of items per page;
+- `q` — free-text search query.
+
+For JSON APIs, the response has a stable shape:
 
 ```json
 {
@@ -79,13 +85,13 @@ resource schema, not arbitrary objects.
 Pagination, filters, sorting, and search belong in query parameters:
 
 ```text
-GET /documents?page=1&limit=20&status=published&ownerId=42&search=contract
+GET /documents?page=1&per_page=20&status=published&ownerId=42&q=contract
 ```
 
 Rules:
 
-- `page` and `limit` must be validated and have safe defaults;
-- `limit` must have a server-side maximum;
+- `page` and `per_page` must be validated and have safe defaults;
+- `per_page` must have a server-side maximum;
 - every supported filter must be an explicit typed query field;
 - filtering must happen in the database, not after loading all rows in memory;
 - list queries should support search whenever the entity is user-facing.
@@ -114,7 +120,95 @@ Create and update DTOs should be separate from the read DTO when their fields
 differ. Never accept server-managed fields such as `id`, `createdAt`, or
 `updatedAt` from an untrusted create/update payload unless explicitly required.
 
-## 6. Exceptions
+## 6. Input Validation
+
+Validate every path parameter, query parameter, filter, and request body at the
+API boundary before executing business logic. In FastAPI, use separate Pydantic
+schemas for read, create, update, and query contracts.
+
+Validation at the API boundary does not replace database constraints. Required
+fields, unique values, foreign keys, and other invariants must also be enforced
+by the database where applicable.
+
+For `PATCH`, an omitted field keeps its current value; an explicit `null` is
+allowed only when the field is nullable and means that the value is cleared.
+
+## 7. Dates and IDs
+
+- Return dates and timestamps in ISO 8601 format;
+- store and return timestamps in UTC;
+- use timezone-aware database fields and application values;
+- choose one ID format for the service (for example, UUID) and do not mix
+  formats between entities without a documented reason;
+- treat IDs as opaque values in the API — clients must not depend on their
+  internal generation strategy.
+
+## 8. Soft Delete
+
+Use soft delete only when required by audit, retention, or business rules. Do
+not add it to every entity by default.
+
+When soft delete is required:
+
+- use a nullable `deleted_at` timestamp as the default marker;
+- exclude deleted records from list endpoints by default;
+- make deleted records behave as not found in regular read endpoints;
+- document an explicit restore or include-deleted operation if it is needed;
+- account for soft-deleted records in unique constraints and relations.
+
+## 9. FastAPI Error Format
+
+For FastAPI endpoints, follow the native `HTTPException` response shape: errors
+are returned under the `detail` field.
+
+All controlled application errors use an object inside `detail`:
+
+```json
+{
+  "detail": {
+    "code": "document_not_found",
+    "message": "Document not found",
+    "details": null
+  }
+}
+```
+
+Fields:
+
+- `code` — stable machine-readable error code;
+- `message` — human-readable message safe to show to the client;
+- `details` — optional typed context, such as field-level validation errors.
+
+For validation errors, `details` contains an array with the field location,
+error type, and message:
+
+```json
+{
+  "detail": {
+    "code": "validation_error",
+    "message": "Request validation failed",
+    "details": [
+      {
+        "loc": ["body", "name"],
+        "type": "string_too_short",
+        "message": "String should have at least 1 character"
+      }
+    ]
+  }
+}
+```
+
+Rules:
+
+- use `HTTPException` for expected HTTP errors;
+- pass the described error object as `HTTPException.detail`;
+- normalize `RequestValidationError` to the same structure;
+- do not use an ad-hoc top-level `error` object;
+- never return stack traces, internal paths, SQL, or other sensitive details;
+- unexpected exceptions must be logged on the server and exposed as a generic
+  `500` response.
+
+## 10. Exceptions
 
 Some resources may intentionally be read-only, non-deletable, or managed only
 through a domain action. In that case:
