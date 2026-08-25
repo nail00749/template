@@ -58,7 +58,11 @@ See: .docs/architecture.md
 - UI is built on @base-ui/react — use `render` prop, never `asChild`.
 - **Select**: `SelectValue` does NOT auto-render the label — always pass the display text as children: `<SelectValue>{LABEL_MAP[value]}</SelectValue>`. See `.docs/ui.md → Select`.
 - **Combobox**: use `ComboboxSelectTrigger` + `ComboboxValue`, not `SelectTrigger`. Wrap API-backed selects in a dedicated component.
+- Use Combobox for entity relations or values that are not known in advance; use Select only for short predefined option lists.
 - **Button loading**: use the `loading` prop, not manual spinner + `disabled`.
+- Use shared/shadcn components instead of raw native controls, including Select, date picker, and time inputs.
+- Use layout-matching `Skeleton` components for page/content loading, including detail pages, forms, and tables.
+- If a table entity has a detail route, clicking its row must navigate to that detail page.
 - **Controlled vs uncontrolled**: pick one for a component's lifetime — never switch. Verify component props/controlled model against Base UI docs before writing forms/UI.
 
 See: .docs/ui.md
@@ -71,6 +75,7 @@ See: .docs/datagrid.md
 - Use useAppForm.
 - Use Zod v4.
 - Use validators.onSubmit by default; use validators.onChange for reactive field validation.
+- After creating an entity, navigate to its detail page when that route exists.
 - Do not use raw useForm unless necessary.
 
 See: .docs/forms.md

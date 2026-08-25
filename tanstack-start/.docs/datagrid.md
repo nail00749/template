@@ -112,3 +112,7 @@ The stretched link uses `z-0`; cell content stacks above it in the normal flow. 
 - Keep `columns` in a separate file or a `const` outside the component
 - Do not create local `DataTable` wrappers around `DataGrid`
 - Do not use `ColumnDef` with `any` — always type the row data
+- Pass the query loading state to `DataGrid.isLoading`; do not replace the
+  table with a generic spinner while its data is loading
+- When an entity has a detail page, make the row navigate to it with `rowLink`
+  (`href`); keep action controls in the action column for their own operations

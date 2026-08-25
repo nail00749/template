@@ -59,6 +59,14 @@ Use the built-in `loading` prop for async/pending state. It renders the spinner 
 
 Do not combine a spinner in `children` with `disabled={true}` to fake loading — it's a bug.
 
+## Loading states — Skeleton
+
+Use `Skeleton` from `@/shared/ui/skeleton` for loading pages and content. The
+placeholder must match the final layout, including detail pages, forms, and
+table content. Do not render empty content or use a generic spinner as the
+page-level loader. For `DataGrid`, pass its loading state through `isLoading` so
+the table can render its loading placeholders.
+
 ## Controlled vs uncontrolled — verify the API first
 
 Base UI locks a component into controlled or uncontrolled mode on its **first render**, based on whether the relevant prop (`value`, `checked`, etc.) is `undefined`. Switching later throws:
@@ -119,6 +127,11 @@ Options arrays and label maps belong in `*Presentation.ts`, not inline in JSX.
 
 Import from `@/shared/ui/combobox`. Use for searchable dropdowns backed by API data (e.g. selecting a contract type from a list).
 
+Use `Combobox`/`ComboboxFieldForm` for relations to other entities or whenever
+the available values are not known in advance. This includes searching remote
+entities by name, code, or other text. Use `Select`/`SelectFieldForm` only for
+short, predefined option lists.
+
 Use `ComboboxSelectTrigger` + `ComboboxValue` as the trigger, not `SelectTrigger`. The same `SelectValue`-children rule **does not apply** — `ComboboxValue` renders its `placeholder` by default; the selected label comes from the option text automatically.
 
 When building a reusable select backed by a query, wrap it in a dedicated component (e.g. `ContractTypeSelect.tsx`) and accept `value` / `onChange` props.
@@ -126,6 +139,11 @@ When building a reusable select backed by a query, wrap it in a dedicated compon
 ## Rules
 
 - **Never create custom Button, Select, Input, Dialog, Badge, Card, Tabs, DropdownMenu** — they already exist in `@/shared/ui`. Using native HTML or rolling your own is a bug.
+- Use shared/shadcn components instead of raw native controls in pages and
+  features: use `Select`/`NativeSelect` instead of `<select>`, `DatePicker` (or
+  `DatePickerForm`) instead of `<input type="date">`, and the existing shared
+  time component instead of `<input type="time">`. If an equivalent does not
+  exist, compose it from shared primitives or add it to `@/shared/ui` first.
 - If a component doesn't exist in `@/shared/ui`, check if it can be composed from existing ones before creating a new file.
 - Use `cn()` helper for conditional class merging
 - Use Tailwind utility classes for layout and spacing
