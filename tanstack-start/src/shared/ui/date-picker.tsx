@@ -83,6 +83,7 @@ export function DatePicker({
           variant="ghost"
           size="icon"
           className="absolute right-1 top-1/2 size-7 -translate-y-1/2"
+          aria-label="Очистить дату"
           onClick={() => onChange?.(undefined)}
         >
           <XIcon className="size-3.5" />

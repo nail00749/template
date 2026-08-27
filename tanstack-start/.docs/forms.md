@@ -5,7 +5,7 @@ Import from `@/shared/form`.
 ## Required Pattern
 
 ```tsx
-import { useAppForm } from '@/shared/form'
+import { Form, useAppForm } from '@/shared/form'
 import { requiredString } from '@/shared/lib/schemas'
 import { z } from 'zod'
 
@@ -28,18 +28,11 @@ const form = useAppForm({
 })
 
 return (
-  <form
-    onSubmit={(e) => {
-      e.preventDefault()
-      form.handleSubmit()
-    }}
-  >
+  <Form form={form}>
     <form.AppField name="name">{(field) => <field.TextFieldForm label="Название" />}</form.AppField>
 
-    <form.AppForm>
-      <form.SubmitButton>Сохранить</form.SubmitButton>
-    </form.AppForm>
-  </form>
+    <form.SubmitButton>Сохранить</form.SubmitButton>
+  </Form>
 )
 ```
 
@@ -73,7 +66,7 @@ function EditItemForm({ item }: { item: Item }) {
     },
   })
 
-  return <form>...</form>
+  return <Form form={form}>...</Form>
 }
 ```
 
@@ -148,11 +141,11 @@ export const AddressFields = withForm({
 
 ```tsx
 // profile-form.tsx
-import { useAppForm } from '@/shared/form'
+import { Form, useAppForm } from '@/shared/form'
 import { AddressFields } from './address-fields'
 import { profileFormOpts } from './profile-form-options'
 
-export const ProfileForm = () => {
+export function ProfileForm() {
   const form = useAppForm({
     ...profileFormOpts,
     onSubmit: async ({ value }) => {
@@ -161,21 +154,14 @@ export const ProfileForm = () => {
   })
 
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault()
-        form.handleSubmit()
-      }}
-    >
+    <Form form={form}>
       <form.AppField name="fullName">
         {(field) => <field.TextFieldForm label="Full name" />}
       </form.AppField>
       <AddressFields form={form} />
 
-      <form.AppForm>
-        <form.SubmitButton>Save</form.SubmitButton>
-      </form.AppForm>
-    </form>
+      <form.SubmitButton>Save</form.SubmitButton>
+    </Form>
   )
 }
 ```
@@ -187,18 +173,155 @@ child sections must not create their own form or duplicate validation.
 
 ## Available Field Components
 
-| Component           | Usage               |
-| ------------------- | ------------------- |
-| `TextFieldForm`     | Текстовый input     |
-| `TextAreaForm`      | Многострочный текст |
-| `SelectFieldForm`   | Выпадающий список   |
-| `CheckboxForm`      | Чекбокс             |
-| `DatePickerForm`    | Дата                |
-| `ComboboxFieldForm` | Combobox с поиском  |
-| `FileFieldForm`     | Загрузка файла      |
-| `RadioGroupForm`    | Radio-группа        |
+| Component                | Usage               |
+| ------------------------ | ------------------- |
+| `TextFieldForm`          | Текстовый input     |
+| `NumberFieldForm`        | Число               |
+| `TextAreaForm`           | Многострочный текст |
+| `SelectFieldForm`        | Выпадающий список   |
+| `CheckboxForm`           | Чекбокс             |
+| `DatePickerForm`         | Дата                |
+| `ComboboxFieldForm`      | Combobox с поиском  |
+| `AsyncComboboxFieldForm` | Server-side поиск   |
+| `FileFieldForm`          | Загрузка файла      |
+| `RadioGroupForm`         | Radio-группа        |
+| `FieldArrayForm`         | Повторяемые поля    |
 
 Перед использованием проверь `@/shared/form/index.ts` — список может пополняться.
+
+## Numeric fields
+
+Use `NumberFieldForm` for numeric form values. Its field value is always
+`number | null`; intermediate input such as `-` remains editable without leaking
+a string into form state. Use `mode="integer"` when decimal separators are not
+allowed:
+
+```tsx
+const schema = z.object({
+  amount: z.number().positive().nullable().refine((value) => value !== null, {
+    message: 'Обязательное поле',
+  }),
+  count: z.number().int().nonnegative().nullable().refine((value) => value !== null, {
+    message: 'Обязательное поле',
+  }),
+})
+
+const defaultValues = {
+  amount: null,
+  count: null,
+}
+
+<form.AppField name="amount">
+  {(field) => <field.NumberFieldForm label="Сумма" />}
+</form.AppField>
+<form.AppField name="count">
+  {(field) => <field.NumberFieldForm label="Количество" mode="integer" />}
+</form.AppField>
+```
+
+The Zod schema owns required, range, and business validation. Numeric form state
+contains only `number | null`, never a numeric string. Do not use `valueType` on
+`TextFieldForm` or call `Number(...)` again in `onSubmit`.
+
+## Combobox and radio bindings
+
+`ComboboxFieldForm` provides the controlled field props to a dedicated reusable
+combobox. Forward all of them to preserve value, blur validation, labels, and
+accessibility:
+
+```tsx
+<form.AppField name="contractTypeId">
+  {(field) => (
+    <field.ComboboxFieldForm label="Тип договора">
+      {(fieldProps) => <ContractTypeSelect {...fieldProps} />}
+    </field.ComboboxFieldForm>
+  )}
+</form.AppField>
+```
+
+`RadioGroupForm` requires a group `label` and accepts string values. Keep option
+values stable and map them to API-specific representations at the request
+boundary when necessary.
+
+## Form error summary
+
+Place `form.FormErrorSummary` near the beginning of long forms. It appears only
+after a failed submit, links each error to its field, and the shared `Form`
+focuses the first invalid control automatically:
+
+```tsx
+<Form form={form}>
+  <form.FormErrorSummary getFieldLabel={(fieldName) => fieldLabels[fieldName] ?? fieldName} />
+
+  {/* fields */}
+</Form>
+```
+
+Use stable field names as component `id` values. For array fields, the label
+mapper must understand names such as `participants[0].name`. Do not add a second
+toast for validation errors.
+
+## Async combobox
+
+The feature owns TanStack Query, option mapping, and pagination. The shared
+field owns debouncing and loading/error/empty UI:
+
+```tsx
+const contracts = useContractOptions()
+
+<form.AppField name="contractId">
+  {(field) => (
+    <field.AsyncComboboxFieldForm
+      label="Договор"
+      options={contracts.options}
+      selectedOption={contracts.selectedOption}
+      isLoading={contracts.isLoading}
+      isFetching={contracts.isFetching}
+      errorMessage={contracts.errorMessage}
+      hasNextPage={contracts.hasNextPage}
+      isLoadingMore={contracts.isFetchingNextPage}
+      onSearchValueChange={contracts.setSearch}
+      onLoadMore={() => void contracts.fetchNextPage()}
+    />
+  )}
+</form.AppField>
+```
+
+`onSearchValueChange` receives an already debounced value. Keep the selected
+option available through `selectedOption` when it is not present in the current
+result page. Never make API requests directly from the shared field.
+
+## Field arrays
+
+Use `mode="array"` and provide a stable UI key. Do not use the array index as a
+React key because remove/reorder operations would move local component state:
+
+```tsx
+<form.AppField
+  name="participants"
+  mode="array"
+>
+  {(field) => (
+    <field.FieldArrayForm
+      label="Участники"
+      itemLabel="Участник"
+      addLabel="Добавить участника"
+      createItem={() => ({ clientId: crypto.randomUUID(), name: '' })}
+      getItemKey={(item) => item.clientId}
+      minItems={1}
+    >
+      {({ index }) => (
+        <form.AppField name={`participants[${index}].name`}>
+          {(nameField) => <nameField.TextFieldForm label="ФИО" />}
+        </form.AppField>
+      )}
+    </field.FieldArrayForm>
+  )}
+</form.AppField>
+```
+
+Strip UI-only keys in the feature request mapper. `FieldArrayForm` owns add,
+remove, and reorder controls; the feature owns item fields and API mapping.
 
 ## Shared Schema Primitives
 
@@ -219,6 +342,9 @@ Never write `z.string().min(1, { message: 'Обязательное поле' })
 ## Rules
 
 - Always use `useAppForm`, not raw `useForm`
+- Always render fields and submit controls inside `<Form form={form}>`. It owns
+  the native submit event, TanStack form context, and `noValidate`; do not
+  duplicate `preventDefault()` or call `form.handleSubmit()` from JSX
 - Use `validators.onSubmit` by default — no client-side `parse`/`safeParse` for validation
 - Use `validators.onChange` when a field renders validation state reactively, including `FileFieldForm`
 - Always `mutateAsync` inside `onSubmit`, never `mutate`
@@ -226,7 +352,12 @@ Never write `z.string().min(1, { message: 'Обязательное поле' })
   field/toast error, first set `meta: { disableToast: true }` on the mutation;
   see `.docs/error-handling.md`
 - Type `defaultValues` with `satisfies FormValues` or explicit type annotation
-- Wrap `SubmitButton` in `form.AppForm`
+- Initialize text/select/combobox/radio fields with `''`, booleans with `false`,
+  and number/date/file fields with `null`; never switch a field between
+  uncontrolled and controlled modes
+- Render `form.SubmitButton` inside the shared `Form`
+- Use `form.FormErrorSummary` for long forms; do not duplicate its error list or
+  focus behavior locally
 - One Zod schema per form — it's the single source of truth
 - Use `requiredString` for required string fields — not raw `z.string().min(1)`
 - For form loading states, follow the common `Skeleton` loading rule from

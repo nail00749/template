@@ -1,16 +1,19 @@
-import type { ComponentPropsWithoutRef, FC, PropsWithChildren } from 'react'
-import { useFormContext } from '@/shared/form/index'
+import type { ComponentPropsWithoutRef, PropsWithChildren } from 'react'
 import { Button } from '@/shared/ui/button'
+import { useFormContext } from './form-context'
 
-type SubmitButtonProps = Omit<ComponentPropsWithoutRef<typeof Button>, 'type' | 'loading'> & {
+export interface SubmitButtonProps extends Omit<
+  ComponentPropsWithoutRef<typeof Button>,
+  'type' | 'loading'
+> {
   loading?: boolean
 }
 
-export const SubmitButton: FC<PropsWithChildren<SubmitButtonProps>> = ({
+export function SubmitButton({
   children,
   loading,
   ...props
-}) => {
+}: PropsWithChildren<SubmitButtonProps>) {
   const form = useFormContext()
 
   return (

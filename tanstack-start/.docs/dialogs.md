@@ -105,18 +105,19 @@ export function CreateItemDialog({ onClose }: DialogProps) {
 
   return (
     <DialogContent>
-      {/* form fields */}
-      <DialogFooter>
-        <Button
-          variant="outline"
-          onClick={onClose}
-        >
-          Отмена
-        </Button>
-        <form.AppForm>
+      <Form form={form}>
+        {/* form fields */}
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+          >
+            Отмена
+          </Button>
           <form.SubmitButton>Сохранить</form.SubmitButton>
-        </form.AppForm>
-      </DialogFooter>
+        </DialogFooter>
+      </Form>
     </DialogContent>
   )
 }

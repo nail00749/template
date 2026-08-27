@@ -1,16 +1,18 @@
-import type { FC } from 'react'
 import type { DatePickerProps } from '@/shared/ui/date-picker'
 import { DatePicker } from '@/shared/ui/date-picker'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/shared/ui/field'
-import { useFieldContext } from '@/shared/form/index'
+import { useFieldContext } from './form-context'
 
-interface Props extends Omit<DatePickerProps, 'value' | 'onChange' | 'onBlur' | 'id' | 'name'> {
+export interface DatePickerFormProps extends Omit<
+  DatePickerProps,
+  'value' | 'onChange' | 'onBlur' | 'id' | 'name'
+> {
   label?: string
   description?: string
 }
 
-export const DatePickerForm: FC<Props> = ({ label, description, ...props }) => {
-  const field = useFieldContext<Date | undefined>()
+export function DatePickerForm({ label, description, ...props }: DatePickerFormProps) {
+  const field = useFieldContext<Date | null>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
 
   return (
@@ -21,7 +23,7 @@ export const DatePickerForm: FC<Props> = ({ label, description, ...props }) => {
         id={field.name}
         name={field.name}
         value={field.state.value}
-        onChange={(date) => field.handleChange(date)}
+        onChange={(date) => field.handleChange(date ?? null)}
         onBlur={field.handleBlur}
         aria-invalid={isInvalid}
         {...props}

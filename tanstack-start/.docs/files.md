@@ -24,15 +24,21 @@
 Параметры:
 
 - `accept` — стандартный HTML-атрибут для input type="file".
-- `allowedExtensions` — массив допустимых расширений (включая точку).
+- `allowedExtensions` — массив допустимых расширений. Регистр и начальная точка
+  нормализуются (`pdf`, `.pdf`, `.PDF` эквивалентны).
 - `allowedMimeTypes` — массив допустимых MIME-типов.
 - `invalidFileMessage` — кастомное сообщение об ошибке.
 
-По умолчанию поле опционально. Чтобы сделать обязательным — добавь в Zod-схему:
+Default field value is `null`. Use the shared SSR-safe `fileSchema`; to make the
+field required, refine the nullable initial value in the form schema:
 
 ```ts
+import { fileSchema } from '@/shared/lib/schemas'
+
 const schema = z.object({
-  attachment: z.instanceof(File, { message: 'Выберите файл' }),
+  attachment: fileSchema.nullable().refine((file) => file !== null, {
+    message: 'Выберите файл',
+  }),
 })
 ```
 
@@ -63,8 +69,8 @@ await api.uploadDocument(formData)
 `FileFieldForm` валидирует по расширению и MIME-типу. Не дублируй это в
 Zod-схеме — Zod не имеет доступа к MIME-типу File в браузере.
 
-Проверяй размер файла, если нужно, в `onChange` поля или в `onSubmit` формы
-перед вызовом API.
+Проверяй размер файла в Zod-схеме через `.refine(...)`; MIME и расширение
+остаются ответственностью `FileFieldForm`.
 
 ## Ошибки с сервера
 
@@ -104,6 +110,8 @@ useEffect(() => {
 ## Правила
 
 - Всегда используй `FileFieldForm` — не создавай кастомный input file.
+- Поле уже поддерживает keyboard focus, повторный выбор того же файла и очистку;
+  не дублируй эти controls на уровне feature.
 - Не используй `z.instanceof(File)` для опциональных полей — добавляй
   `.optional()` или `.nullable()`.
 - После успешной загрузки показывай `toast.success(...)`.

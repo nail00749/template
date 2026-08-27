@@ -65,7 +65,8 @@ Base UI, Bun, Nitro, Vite 8.
 - Use Orval-generated API clients and `queryOptions`/`mutationOptions` wrappers.
 - Mutation errors have one owner: the global handler by default. A local custom
   toast must first disable the global toast via query/mutation metadata.
-- Use `useAppForm` with one Zod v4 schema per form.
+- Use `useAppForm` with one Zod v4 schema and the shared `<Form form={form}>`
+  wrapper; do not duplicate native submit boilerplate.
 - Use DataGrid for API-backed tables and Skeleton for page/content loading.
 - Use Base UI's `render` prop, never Radix's `asChild` pattern.
 

@@ -1,15 +1,18 @@
-import type { ChangeEvent, FC } from 'react'
+import type { ChangeEvent } from 'react'
 import type { TextareaProps } from '@/shared/ui/textarea'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/shared/ui/field'
-import { useFieldContext } from '@/shared/form/index'
+import { useFieldContext } from './form-context'
 import { Textarea } from '@/shared/ui/textarea'
 
-interface Props extends Omit<TextareaProps, 'value' | 'onChange' | 'id' | 'name' | 'onBlur'> {
+export interface TextAreaFormProps extends Omit<
+  TextareaProps,
+  'value' | 'onChange' | 'id' | 'name' | 'onBlur'
+> {
   label?: string
   description?: string
 }
 
-export const TextAreaForm: FC<Props> = ({ label, description, ...props }) => {
+export function TextAreaForm({ label, description, ...props }: TextAreaFormProps) {
   const field = useFieldContext<string>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
 
@@ -24,7 +27,7 @@ export const TextAreaForm: FC<Props> = ({ label, description, ...props }) => {
       <Textarea
         id={field.name}
         name={field.name}
-        value={field.state.value}
+        value={field.state.value ?? ''}
         onChange={onChange}
         onBlur={field.handleBlur}
         aria-invalid={isInvalid}

@@ -1,14 +1,23 @@
-import type { FC, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/shared/ui/field'
-import { useFieldContext } from '@/shared/form/index'
+import { useFieldContext } from './form-context'
 
-interface Props {
-  label?: string
-  description?: string
-  children: (props: { onBlur: () => void; 'aria-invalid': boolean }) => ReactNode
+export interface ComboboxFieldRenderProps {
+  id: string
+  name: string
+  value: string
+  onValueChange: (value: string | null) => void
+  onBlur: () => void
+  'aria-invalid': boolean
 }
 
-export const ComboboxFieldForm: FC<Props> = ({ label, description, children }) => {
+export interface ComboboxFieldFormProps {
+  label?: string
+  description?: string
+  children: (props: ComboboxFieldRenderProps) => ReactNode
+}
+
+export function ComboboxFieldForm({ label, description, children }: ComboboxFieldFormProps) {
   const field = useFieldContext<string>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
 
@@ -17,6 +26,10 @@ export const ComboboxFieldForm: FC<Props> = ({ label, description, children }) =
       {label && <FieldLabel htmlFor={field.name}>{label}</FieldLabel>}
 
       {children({
+        id: field.name,
+        name: field.name,
+        value: field.state.value ?? '',
+        onValueChange: (value) => field.handleChange(value ?? ''),
         onBlur: field.handleBlur,
         'aria-invalid': isInvalid,
       })}

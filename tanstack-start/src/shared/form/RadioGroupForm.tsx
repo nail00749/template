@@ -1,5 +1,6 @@
 import { useId } from 'react'
-import { useFieldContext } from '@/shared/form/index'
+import type { FocusEvent } from 'react'
+import { useFieldContext } from './form-context'
 import {
   Field,
   FieldContent,
@@ -12,37 +13,52 @@ import {
 } from '@/shared/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/shared/ui/radio-group'
 
-type Item<T> = {
+export interface RadioGroupFormItem {
   title: string
   description?: string
-  value: T
+  value: string
+  disabled?: boolean
 }
 
-type Props<T> = {
-  items: Array<Item<T>>
+export interface RadioGroupFormProps {
+  label: string
+  description?: string
+  items: ReadonlyArray<RadioGroupFormItem>
+  disabled?: boolean
 }
 
-export const RadioGroupForm = <T,>({ items }: Props<T>) => {
-  const field = useFieldContext()
+export function RadioGroupForm({ label, description, items, disabled }: RadioGroupFormProps) {
+  const field = useFieldContext<string>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
   const id = useId()
 
-  return (
-    <FieldSet>
-      <FieldLegend></FieldLegend>
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      field.handleBlur()
+    }
+  }
 
-      <FieldDescription></FieldDescription>
+  return (
+    <FieldSet data-invalid={isInvalid}>
+      <FieldLegend variant="label">{label}</FieldLegend>
+
+      {description && <FieldDescription>{description}</FieldDescription>}
 
       <RadioGroup
         name={field.name}
-        value={field.state.value}
+        value={field.state.value ?? ''}
         onValueChange={field.handleChange}
+        onBlur={handleBlur}
+        disabled={disabled}
+        aria-invalid={isInvalid}
       >
-        {items.map((item, i) => {
+        {items.map((item, index) => {
+          const itemId = `${id}-${index}`
+
           return (
             <FieldLabel
-              key={i}
-              htmlFor={`${id}-${i}`}
+              key={item.value}
+              htmlFor={itemId}
             >
               <Field
                 orientation="horizontal"
@@ -56,7 +72,8 @@ export const RadioGroupForm = <T,>({ items }: Props<T>) => {
 
                 <RadioGroupItem
                   value={item.value}
-                  id={`${id}-${i}`}
+                  id={itemId}
+                  disabled={item.disabled}
                   aria-invalid={isInvalid}
                 />
               </Field>

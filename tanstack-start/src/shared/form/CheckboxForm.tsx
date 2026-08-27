@@ -1,17 +1,16 @@
-import type { FC } from 'react'
 import type { CheckboxProps } from '@/shared/ui/checkbox'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Field, FieldError, FieldLabel } from '@/shared/ui/field'
-import { useFieldContext } from '@/shared/form/index'
+import { useFieldContext } from './form-context'
 
-interface Props extends Omit<
+export interface CheckboxFormProps extends Omit<
   CheckboxProps,
   'value' | 'onCheckedChange' | 'id' | 'name' | 'onBlur'
 > {
   label?: string
 }
 
-export const CheckboxForm: FC<Props> = ({ label, ...props }) => {
+export function CheckboxForm({ label, ...props }: CheckboxFormProps) {
   const field = useFieldContext<boolean>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
 
@@ -27,7 +26,7 @@ export const CheckboxForm: FC<Props> = ({ label, ...props }) => {
       <Checkbox
         id={field.name}
         name={field.name}
-        checked={field.state.value}
+        checked={field.state.value ?? false}
         onCheckedChange={onChange}
         onBlur={field.handleBlur}
         aria-invalid={isInvalid}

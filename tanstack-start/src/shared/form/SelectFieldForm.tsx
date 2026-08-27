@@ -1,25 +1,29 @@
-import type { FC } from 'react'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/shared/ui/field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
-import { useFieldContext } from '@/shared/form/index'
+import { useFieldContext } from './form-context'
 
-type Option = {
+export interface SelectFieldOption {
   value: string
   label: string
   disabled?: boolean
 }
 
-interface Props {
+export interface SelectFieldFormProps {
   label?: string
   description?: string
   placeholder?: string
-  options: Option[]
+  options: ReadonlyArray<SelectFieldOption>
 }
 
-export const SelectFieldForm: FC<Props> = ({ label, description, placeholder, options }) => {
+export function SelectFieldForm({
+  label,
+  description,
+  placeholder,
+  options,
+}: SelectFieldFormProps) {
   const field = useFieldContext<string>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
-  const currentValue = field.state.value
+  const currentValue = field.state.value ?? ''
   const selectedOption = options.find((option) => option.value === currentValue)
   const displayLabel = selectedOption?.label ?? currentValue
 
@@ -31,10 +35,14 @@ export const SelectFieldForm: FC<Props> = ({ label, description, placeholder, op
         name={field.name}
         value={currentValue}
         onValueChange={(value) => {
-          if (value !== null) field.handleChange(value)
+          if (value !== null) {
+            field.handleChange(value)
+          }
         }}
         onOpenChange={(open) => {
-          if (!open) field.handleBlur()
+          if (!open) {
+            field.handleBlur()
+          }
         }}
       >
         <SelectTrigger
