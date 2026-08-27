@@ -93,6 +93,48 @@ navigate({
 })
 ```
 
+## Programmatic Navigation
+
+- `useNavigate()` — в компонентах и `use<Feature>` хуках.
+- `router.navigate(...)` — в `onSuccess` callbacks, вне компонентов (например,
+  после logout).
+- `redirect({ to: '/login' })` — только в `beforeLoad` / `loader`. Бросать как исключение: `throw redirect(...)`.
+
+```ts
+const navigate = useNavigate()
+
+navigate({
+  to: '/items/$id',
+  params: { id: item.id },
+  replace: true, // для logout, delete и других «без возврата» переходов
+})
+```
+
+Используй `replace: true` когда нет смысла возвращаться на предыдущую
+страницу (delete-confirmation, logout, post-create redirect).
+
+## type-safe Links
+
+Всегда используй `linkOptions` для построения ссылок с params/search:
+
+```ts
+import { Link, linkOptions } from '@tanstack/react-router'
+
+const link = linkOptions({
+  to: '/items/$id',
+  params: { id: item.id },
+})
+
+<Link {...link}>...</Link>
+```
+
+Никогда не собирай path строкой — потеряешь типизацию.
+
+## Route.useParams / Route.useSearch
+
+Всегда используй `Route.useSearch()` / `Route.useParams()` от самого роута.
+Для доступа к родительским данным — `getRouteApi('/_admin').useSearch()`.
+
 ## Rules
 
 - Always `validateSearch` with Zod — never read raw `window.location.search`

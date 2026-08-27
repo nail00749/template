@@ -4,18 +4,26 @@ Use components from `@/shared/ui`.
 
 ## Available Components
 
-| Component                              | Import path                 |
-| -------------------------------------- | --------------------------- |
-| Button                                 | `@/shared/ui/button`        |
-| Dialog, DialogContent, DialogHeader... | `@/shared/ui/dialog`        |
-| Card, CardHeader, CardContent...       | `@/shared/ui/card`          |
-| Select, SelectTrigger...               | `@/shared/ui/select`        |
-| DropdownMenu...                        | `@/shared/ui/dropdown-menu` |
-| Tabs, TabsList...                      | `@/shared/ui/tabs`          |
-| Badge                                  | `@/shared/ui/badge`         |
-| Spinner                                | `@/shared/ui/spinner`       |
-| DataGrid                               | `@/shared/ui/DataGrid`      |
-| Combobox                               | `@/shared/ui/combobox`      |
+Полный актуальный список смотри в `src/shared/ui/` — там лежат все примитивы.
+Перед созданием нового компонента проверь эту папку и `@/shared/form`,
+`@/shared/dialog`.
+
+Часто используемые:
+
+- **Buttons & inputs**: `button`, `input`, `input-group`, `textarea`, `checkbox`,
+  `radio-group`, `switch`, `slider`, `native-select`
+- **Pickers**: `select`, `combobox`, `date-picker`, `calendar`
+- **Overlays**: `dialog`, `alert-dialog`, `drawer`, `sheet`, `popover`,
+  `dropdown-menu`, `tooltip`
+- **Layout**: `card`, `tabs`, `separator`, `scroller`, `scroll-area`,
+  `container`, `sidebar`
+- **Feedback**: `badge`, `spinner`, `skeleton`, `progress`, `sonner` (Toaster)
+- **Data**: `DataGrid`, `table`, `pagination`, `cells/TruncatedCell`
+- **Branding**: `Logo`, `LogoMts`, `Picture`, `Typography`, `avatar`
+
+**Правило:** если нужного компонента нет — добавь в `@/shared/ui`, а не в
+`features/<domain>/ui/`. Локальные one-off компоненты допустимы только когда
+их использует ровно один компонент.
 
 ## Base UI — render prop instead of asChild
 
@@ -135,6 +143,26 @@ short, predefined option lists.
 Use `ComboboxSelectTrigger` + `ComboboxValue` as the trigger, not `SelectTrigger`. The same `SelectValue`-children rule **does not apply** — `ComboboxValue` renders its `placeholder` by default; the selected label comes from the option text automatically.
 
 When building a reusable select backed by a query, wrap it in a dedicated component (e.g. `ContractTypeSelect.tsx`) and accept `value` / `onChange` props.
+
+## Links
+
+Типобезопасные ссылки — только через TanStack Router. Для построения параметров
+используй `linkOptions`:
+
+```tsx
+import { Link, linkOptions } from '@tanstack/react-router'
+
+const link = linkOptions({
+  to: '/items/$id',
+  params: { id: item.id },
+  search: { tab: 'files' },
+})
+
+<Link {...link}>Открыть</Link>
+```
+
+Никогда не собирай путь строкой (`<Link to={`/items/${id}`}>`) — теряется
+типизация params/search. См. `.docs/router.md`.
 
 ## Rules
 

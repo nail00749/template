@@ -70,6 +70,57 @@ open(ConfirmDialog, 'confirm-delete', {
 - Dialog component returns `DialogContent` only, never `<Dialog>`
 - `onClose` comes from `DialogProps`, not a local state setter
 - Use `ConfirmDialog` for all destructive confirmations
+- In async confirms, `onConfirm` must return a Promise — `ConfirmDialog` will
+  keep its loading state until it resolves and stay open if it rejects
+
+## Async Confirm (mutation inside dialog)
+
+Когда кнопка подтверждения запускает mutation, не закрывай диалог до завершения:
+
+```tsx
+open(ConfirmDialog, 'confirm-delete', {
+  title: 'Удалить запись?',
+  description: 'Это действие необратимо.',
+  onConfirm: async () => {
+    await deleteMutation.mutateAsync(id) // бросит — диалог не закроется
+  },
+})
+```
+
+`ConfirmDialog` сам показывает loading на кнопке подтверждения и закрывается
+только после успешного `onConfirm`. Если `onConfirm` бросит, диалог останется
+открытым и ошибку покажет глобальный `onError` (см. `.docs/api.md`).
+
+Для собственных диалогов с формой:
+
+```tsx
+export function CreateItemDialog({ onClose }: DialogProps) {
+  const form = useAppForm({
+    // ...
+    onSubmit: async ({ value }) => {
+      await createMutation.mutateAsync(value)
+      onClose() // закроет диалог
+    },
+  })
+
+  return (
+    <DialogContent>
+      {/* form fields */}
+      <DialogFooter>
+        <Button
+          variant="outline"
+          onClick={onClose}
+        >
+          Отмена
+        </Button>
+        <form.AppForm>
+          <form.SubmitButton>Сохранить</form.SubmitButton>
+        </form.AppForm>
+      </DialogFooter>
+    </DialogContent>
+  )
+}
+```
 
 ## Dialog width on mobile
 

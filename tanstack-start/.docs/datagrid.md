@@ -106,6 +106,60 @@ Use when the action is not a route navigation (open a dialog, toggle a row, etc.
 
 The stretched link uses `z-0`; cell content stacks above it in the normal flow. Any interactive child (button, badge-as-button) inside a cell receives clicks as expected — they do not trigger the link. No `stopPropagation` needed in cell renderers.
 
+## Empty State
+
+DataGrid показывает empty state из коробки. Кастомный empty state
+(с CTA для создания первого элемента) используй только когда
+`isLoading === false` и данных нет:
+
+```tsx
+if (!isLoading && (rows?.length ?? 0) === 0) {
+  return <EmptyState action={<Button>Создать первый</Button>} />
+}
+
+return <DataGrid ... />
+```
+
+Никогда не показывай empty state во время загрузки — для загрузки используй
+`isLoading` (таблица сама рисует skeleton placeholders).
+
+## Filtering via Search Params
+
+Фильтры таблицы — в URL search params (см. `.docs/router.md`):
+
+```tsx
+// routes/admin/items/index.tsx
+export const Route = createFileRoute('/admin/items/')({
+  validateSearch: itemsSearchSchema,
+  component: ItemsPage,
+})
+
+// features/items/ui/ItemsPage.tsx
+function ItemsPage() {
+  const search = Route.useSearch()
+  const params = mapItemsSearchToParams(search)
+  const gridState = useDataGridState()
+
+  const { data, isLoading } = useQuery(itemsQueryOptions({ ...params, ...gridState }))
+
+  return (
+    <>
+      <ItemsFilters /> {/* внутри navigate({ search: (prev) => ({ ...prev, status: 'active' }) }) */}
+      <DataGrid ... />
+    </>
+  )
+}
+```
+
+## Selection
+
+Для массовых операций используй row selection. Состояние — локальное
+(в `use<Feature>` хуке или компоненте страницы), не в URL — selection
+эфемерен и не должен переживать перезагрузку.
+
+Подробности API — в исходниках `@/shared/ui/DataGrid` (selection column
+добавляется автоматически при передаче соответствующих props).
+
 ## Rules
 
 - Always use `useDataGridState` for API-backed tables

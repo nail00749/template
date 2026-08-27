@@ -8,13 +8,18 @@
 - `{TICKET-ID}` — ID задачи в трекере, КАПСОМ (например `HR-6706`, `LLMOPS-944`, `MLD-67`).
 - `{short_description}` — краткое описание на английском в `snake_case` или `kebab-case`.
 
+Для hotfix'ов без тикета в трекере допустимо `fix/{short_description}` без ID —
+но коммиты всё равно должны соответствовать формату `[{TICKET-ID}] {description}`:
+используй `[NO-TICKET]` как placeholder, если трекер-тикета нет.
+
 Примеры:
 
 ```
 feature/HR-6706/create_index
 feature/LLMOPS-6852/create_service
 feature/MLD-67/checklist-manage
-fix/summary-cards-comparison
+fix/HR-6891/summary-cards-comparison
+fix/summary-cards-comparison  # допустимо только если тикета нет вообще
 ```
 
 ## Commit Format

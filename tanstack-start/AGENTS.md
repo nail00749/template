@@ -39,12 +39,49 @@ Stack:
 
 ## Architecture
 
-- Use FSD architecture.
+- Use FSD architecture (`app`, `routes`, `features`, `widgets`, `shared`).
 - shared must never import features or widgets.
 - routes must stay thin.
-- Use existing project structure.
+- Page components may call their `use<Feature>` hook directly and render the
+  page; do not add proxy components or `<PageName>View` layers without a real
+  reuse or complexity benefit.
+- Keep non-trivial page logic (queries, mutations, forms, navigation, event
+  handlers, and derived state) in a co-located `use<Feature>` hook. Trivial
+  local UI state may remain in the component.
 
 See: .docs/architecture.md
+
+---
+
+## TanStack Start (SSR, loaders, links)
+
+- Loaders — only `context.queryClient.ensureQueryData(...)`; never call API directly.
+- Use `linkOptions` for typed links; never build paths as strings.
+- Use `createIsomorphicFn` for code that differs between server and client.
+- Environment — only via `@/env`, never `import.meta.env` directly.
+
+See: .docs/start.md
+
+---
+
+## Auth
+
+- Protected routes — `beforeLoad` + `ensureQueryData(meQueryOptions())`.
+- On missing user — `throw redirect({ to: '/login' })`.
+- Logout — `router.navigate({ to: '/login', replace: true })` in `onSuccess`.
+
+See: .docs/auth.md
+
+---
+
+## Error Handling
+
+- Mutation errors — `toast.error(getMessageFromError(e))`. Never `e.message`.
+- Query errors — global handler shows toast; do not duplicate.
+- Page-level crashes — handled by `RootErrorBoundary`; do not add local
+  error boundaries without a real need.
+
+See: .docs/error-handling.md
 
 ---
 
@@ -53,17 +90,14 @@ See: .docs/architecture.md
 - Use shadcn/ui components from @/shared/ui.
 - Do not create custom Button, Select, Input, Dialog — use existing ones.
 - Do not build custom UI primitives unless the existing component is provably insufficient.
-- Use DataGrid for all new tables.
-- Do not use raw Table for new implementations.
+- Use DataGrid for all new tables. Never use raw Table.
 - UI is built on @base-ui/react — use `render` prop, never `asChild`.
-- **Select**: `SelectValue` does NOT auto-render the label — always pass the display text as children: `<SelectValue>{LABEL_MAP[value]}</SelectValue>`. See `.docs/ui.md → Select`.
-- **Combobox**: use `ComboboxSelectTrigger` + `ComboboxValue`, not `SelectTrigger`. Wrap API-backed selects in a dedicated component.
-- Use Combobox for entity relations or values that are not known in advance; use Select only for short predefined option lists.
+- **Select**: `SelectValue` does NOT auto-render the label — pass children explicitly.
+- **Combobox**: `ComboboxSelectTrigger` + `ComboboxValue`, not `SelectTrigger`.
 - **Button loading**: use the `loading` prop, not manual spinner + `disabled`.
-- Use shared/shadcn components instead of raw native controls, including Select, date picker, and time inputs.
-- Use layout-matching `Skeleton` components for page/content loading, including detail pages, forms, and tables.
-- If a table entity has a detail route, clicking its row must navigate to that detail page.
-- **Controlled vs uncontrolled**: pick one for a component's lifetime — never switch. Verify component props/controlled model against Base UI docs before writing forms/UI.
+- Use Skeleton for page/content loading; never a generic spinner for full pages.
+- Controlled vs uncontrolled: pick one mode, never switch. Verify against Base UI docs.
+- Links — `linkOptions`, never string paths.
 
 See: .docs/ui.md
 See: .docs/datagrid.md
@@ -72,11 +106,12 @@ See: .docs/datagrid.md
 
 ## Forms
 
-- Use useAppForm.
-- Use Zod v4.
-- Use validators.onSubmit by default; use validators.onChange for reactive field validation.
-- After creating an entity, navigate to its detail page when that route exists.
-- Do not use raw useForm unless necessary.
+- Use `useAppForm`, Zod v4. Never raw `useForm`.
+- `validators.onSubmit` by default; `validators.onChange` for reactive fields.
+- One Zod schema per form — single source of truth.
+- `requiredString` from `@/shared/lib/schemas` for required strings.
+- After create — navigate to detail page when it exists.
+- Edit forms — mount after data loads; never `form.reset()` in `useEffect`.
 
 See: .docs/forms.md
 
@@ -84,18 +119,31 @@ See: .docs/forms.md
 
 ## Dialogs
 
-- Use useDialog.
-- Use ConfirmDialog for confirmation flows.
+- Use `useDialog`. `ConfirmDialog` for destructive actions.
+- Dialog component returns `DialogContent` only — never wraps in `<Dialog>`.
+- Async `onConfirm` must return a Promise; do not close before resolution.
 
 See: .docs/dialogs.md
 
 ---
 
+## Files
+
+- Use `FileFieldForm` from `@/shared/form` for uploads.
+- Use `buildFormData` from `@/shared/api/formData` for multipart requests.
+- Server-side file validation errors — via `getFileValidationErrorMessage`.
+
+See: .docs/files.md
+
+---
+
 ## Routing
 
-- Use validateSearch with Zod.
-- Use .catch() for search params.
-- Preserve existing search params via updater functions.
+- Always `validateSearch` with Zod. All fields must `.catch()`.
+- `z.coerce.number()` for numeric URL params. `.optional().catch(undefined)` for optional.
+- Simple schemas (≤3 params) in route file; complex schemas + mappers in `features/<domain>/model/`.
+- Preserve existing search params via updater functions: `(prev) => ({ ...prev, page: 2 })`.
+- Use `useNavigate`/`router.navigate` for programmatic navigation; `throw redirect()` in loaders only.
 
 See: .docs/router.md
 
@@ -103,11 +151,11 @@ See: .docs/router.md
 
 ## API
 
-- Use Orval generated clients only.
-- Never manually create API clients.
-- Prefer queryOptions and mutationOptions.
-- Query keys live in `<domain>.keys.ts` using factory pattern.
-- Always invalidate via parent `*All()` key after mutations.
+- Orval-generated clients only. Never manual fetch/axios calls.
+- `queryOptions` / `mutationOptions` wrappers, never inline.
+- Query keys in `<domain>.keys.ts` via factory. Invalidate via `*All()` after mutations.
+- Files upload — `buildFormData` + `FileFieldForm`.
+- Regenerate with `bun run generate-api`; never edit `endpoints/` by hand.
 
 See: .docs/api.md
 
@@ -115,11 +163,12 @@ See: .docs/api.md
 
 ## TypeScript
 
-- Never use `any` — use `unknown` or generics.
-- Never use type assertions (`as X`) unless working with Orval-generated code.
-- Import types with `import type` when value is used only as a type.
-- Infer types from Zod schemas: `type X = z.infer<typeof schema>`.
-- No default exports for components — always named exports.
+- Never `any` — `unknown` or generics.
+- Never type assertions (`as X`) except with Orval-generated code.
+- `import type` for type-only imports.
+- Infer from Zod: `type X = z.infer<typeof schema>`.
+- No default exports for components.
+- `_` prefix only for fixed-signature callback params; otherwise delete unused.
 
 See: .docs/conventions.md
 
@@ -127,16 +176,14 @@ See: .docs/conventions.md
 
 ## Code Style
 
-- No nested ternaries.
-- Always use braces — no inline/brace-less bodies for `if`/`else`/`for`/`while`.
-- One component per file.
-- Use interfaces for props.
-- Use @/ imports only.
-- Errors in mutations: always `toast.error(getMessageFromError(e))`, never `e.message`.
-- Dates: always `formatDate()` + `DATE_FORMATS` from @/shared/lib/formatDate.
-- Required string schemas: use `requiredString` from @/shared/lib/schemas.
-- Display strings and status mappers go in `*Presentation.ts`, not inline in JSX.
-- Prefix floating promises with `void` (e.g. `void context.client.invalidateQueries(...)`).
+- No nested ternaries. Always braces for `if`/`for`/`while`.
+- One component per file. Props via `interface`.
+- `@/` imports only.
+- `cn()` for conditional classes. Tailwind utilities first; CSS modules for complex.
+- Dates: `formatDate()` + `DATE_FORMATS` from `@/shared/lib/formatDate`.
+- Display strings / status mappers — in `*Presentation.ts`, not inline JSX.
+- Floating promises: prefix with `void`.
+- After successful mutations: `toast.success('Сохранено')` (or `'Создано'` / `'Удалено'`).
 
 See: .docs/conventions.md
 
@@ -144,25 +191,17 @@ See: .docs/conventions.md
 
 ## Hooks
 
-- Debounce values with `useDebouncedValue` from `@/shared/hooks/use-debounced-value` — never inline `setTimeout` + `useRef` in a component.
-
----
-
-## Routing — Search Params
-
-- Simple schemas (≤3 params, no mapping): schema lives in the route file.
-- Complex schemas (pagination, date ranges, API mappers): schema + `map*SearchToParams` in `features/<domain>/model/`.
-- Always `z.coerce.number()` for numeric URL params.
-- Optional params: `.optional().catch(undefined)`.
-
-See: .docs/router.md
+- `useDebouncedValue` from `@/shared/hooks/use-debounced-value` — never inline
+  `setTimeout` + `useRef` for debouncing.
+- `useIsMobile`, `useDataGridState` — check `@/shared/hooks` before rolling your own.
 
 ---
 
 ## Git
 
-- Branches: `feature/{TICKET-ID}/{short_description}` (or `fix/...` for bugfixes).
-- Commits: `[{TICKET-ID}] {description}` — ticket ID in brackets, uppercase, description in English.
+- Branches: `feature/{TICKET-ID}/{short_description}` or `fix/{TICKET-ID}/{...}`.
+- Commits: `[{TICKET-ID}] {description}` — English, starts with a verb.
+- Fix without ticket: `fix/{short_description}` + commit prefix `[NO-TICKET]`.
 
 See: .docs/git.md
 

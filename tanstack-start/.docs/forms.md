@@ -43,6 +43,51 @@ return (
 )
 ```
 
+## Edit Forms (async defaults)
+
+При редактировании сущности форму нужно заполнить данными с сервера. Порядок:
+
+1. Пока данные грузятся — показывай `Skeleton` под layout формы.
+2. Когда данные пришли — монтируй форму с `defaultValues` из query.
+
+```tsx
+export function EditItemPage({ itemId }: Props) {
+  const { data: item, isLoading } = useQuery(itemQueries.detail(itemId))
+
+  if (isLoading || !item) {
+    return <EditItemFormSkeleton />
+  }
+
+  return <EditItemForm item={item} />
+}
+
+function EditItemForm({ item }: { item: Item }) {
+  const form = useAppForm({
+    defaultValues: {
+      name: item.name,
+      status: item.status,
+    } satisfies FormValues,
+    validators: { onSubmit: schema },
+    onSubmit: async ({ value }) => {
+      await updateMutation.mutateAsync({ id: item.id, ...value })
+    },
+  })
+
+  return <form>...</form>
+}
+```
+
+Правила:
+
+- **Не используй** `form.reset()` в `useEffect` при смене query-данных — вместо
+  этого монтируй форму через key (`<EditItemForm key={item.id} item={item} />`)
+  или в отдельном компоненте, который создаётся после загрузки.
+- **Не создавай** форму с пустыми defaultValues и потом не заполняй её — это
+  ломает `validators.onSubmit` (Zod сравнит с дефолтами).
+- При сабмите — всегда `mutateAsync`, потом `toast.success` +
+  `void queryClient.invalidateQueries({ queryKey: entityKeys.all })` (обычно
+  делается в `onSuccess` mutation).
+
 ## Composite Forms
 
 For a large form, split only the UI into meaningful sections. Keep one schema,
@@ -150,6 +195,10 @@ child sections must not create their own form or duplicate validation.
 | `CheckboxForm`      | Чекбокс             |
 | `DatePickerForm`    | Дата                |
 | `ComboboxFieldForm` | Combobox с поиском  |
+| `FileFieldForm`     | Загрузка файла      |
+| `RadioGroupForm`    | Radio-группа        |
+
+Перед использованием проверь `@/shared/form/index.ts` — список может пополняться.
 
 ## Shared Schema Primitives
 
@@ -181,3 +230,9 @@ Never write `z.string().min(1, { message: 'Обязательное поле' })
   `.docs/ui.md` and match the final form layout
 - After creating an entity, navigate to its detail page when that route exists;
   do not leave the user on the empty create form
+- For edit forms — mount the form only after the entity loads; never
+  `form.reset()` in `useEffect` (см. «Edit Forms» выше)
+- Form on modal vs page: use a dialog form when the create/edit is a quick
+  action from a list (1–3 fields, fits in a dialog); use a page form when the
+  entity is large (multiple sections), needs its own URL, or has complex
+  dependencies between fields

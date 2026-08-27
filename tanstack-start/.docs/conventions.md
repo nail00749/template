@@ -28,7 +28,11 @@ for (const item of items) {
 - `strict: true` is enforced — no workarounds
 - Never use `any` — use `unknown` or proper generics
 - Never use type assertions (`as X`) except when working with Orval-generated code where the shape is guaranteed
-- `noUnusedLocals` and `noUnusedParameters` are enforced — remove dead code instead of prefixing with `_`
+- `noUnusedLocals` and `noUnusedParameters` are enforced — remove dead code.
+  Underscore-prefix (`_payload`, `_result`) разрешён **только** для обязательных
+  позиционных параметров callback-функций (например, `onSuccess: (_r, _p) => ...`),
+  где сигнатура фиксирована библиотекой. Для собственных функций — просто убери
+  неиспользуемый параметр.
 - Infer types from Zod schemas: `type FormValues = z.infer<typeof schema>`
 - Import types with `import type` when the value is only used as a type
 
@@ -62,7 +66,9 @@ try {
 ```
 
 - Never use `e.message` directly — it won't handle Axios/API error shapes
-- Always show `toast.success` after successful mutations
+- Always show `toast.success` after successful mutations — глобальный toast.error
+  уже показывает ошибки (см. `.docs/error-handling.md`), но успех нужно
+  подтверждать явно. Стандартная строка: `'Сохранено'` / `'Создано'` / `'Удалено'`.
 - For floating promises (e.g. `invalidateQueries`), prefix with `void`:
 
 ```ts
@@ -137,3 +143,29 @@ Before rolling your own debounce / throttle / media-query logic in a component, 
 ```
 
 No default exports for components — always named exports.
+
+## Page and Hook Structure
+
+- Keep non-presentational logic separate from page JSX in a co-located
+  `use<Feature>` hook when that logic is non-trivial.
+- The page component should call the hook and render its own JSX. Do not add a
+  proxy component that only forwards hook output to `<PageName>View`.
+- Do not create `<PageName>View` automatically. Use a separate View component
+  only when it is reused or when splitting a genuinely large page makes the
+  code clearer.
+- Do not extract trivial local UI state or one-line handlers into a hook just
+  to satisfy the naming convention.
+
+```tsx
+// Preferred
+export function CreatePostPage() {
+  const { form, isPending } = useCreatePost()
+
+  return (
+    <CreatePostForm
+      form={form}
+      isPending={isPending}
+    />
+  )
+}
+```
