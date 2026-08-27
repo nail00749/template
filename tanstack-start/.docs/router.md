@@ -29,14 +29,14 @@ function SuggestionsRoute() {
 ```ts
 // features/legal/model/checked-contracts-search.ts
 export const checkedContractsSearchSchema = z.object({
-  page: z.coerce
+  page: z
     .number()
     .int()
     .min(1)
     .optional()
     .catch(1)
     .transform((v) => v ?? 1),
-  limit: z.coerce
+  limit: z
     .number()
     .int()
     .min(1)
@@ -72,10 +72,21 @@ export const Route = createFileRoute('/admin/contracts/')({
 
 ## `.catch()` Rules
 
+TanStack Router parses search params as JSON before validation, so top-level
+numbers and booleans arrive as `number`/`boolean`, not only as strings. With Zod
+v4, pass the schema directly to `validateSearch`; no adapter or coercion is
+needed.
+
 - Optional string params: `.optional().catch(undefined)`
 - Optional enums: `.enum([...]).optional().catch(undefined)`
-- Numeric params from URL: `z.coerce.number().catch(1)` — use `coerce` because URL values are always strings
-- Booleans: `z.coerce.boolean().catch(false)`
+- Numbers: `z.number().int().min(1).catch(1)`
+- Booleans: `z.boolean().catch(false)`
+- Never use `z.coerce.boolean()` here: if a non-Router string reaches it, the
+  string `'false'` coerces to `true`.
+
+Use `.catch(fallback)` for user-editable URLs so malformed values recover to a
+safe state. Use `.default()` only when invalid input should throw into the
+route's `VALIDATE_SEARCH` error flow.
 
 ## Reading Search Params
 
@@ -132,14 +143,20 @@ const link = linkOptions({
 
 ## Route.useParams / Route.useSearch
 
-Всегда используй `Route.useSearch()` / `Route.useParams()` от самого роута.
-Для доступа к родительским данным — `getRouteApi('/_admin').useSearch()`.
+В route adapter используй `Route.useSearch()` / `Route.useParams()` от самого
+роута и передавай валидированные значения вниз через props. Feature/widget не
+должен импортировать `Route` из верхнего слоя.
+
+Для доступа к родительским route-данным внутри другого route adapter допустим
+`getRouteApi('/_admin')`.
 
 ## Rules
 
 - Always `validateSearch` with Zod — never read raw `window.location.search`
 - Always `.catch()` on every field — no field should throw on invalid input
 - Use `Route.useSearch()`, not `useRouterState`
+- Read Route params/search only in route files; feature/widget entry points
+  receive them through typed props
 - Schema lives in route file when simple, in `features/<domain>/model/` when it needs a mapper or is reused
 - Mapper function (`map*SearchToParams`) converts search state to API params — keeps route component clean
 - Preserve existing params via spread in updater functions

@@ -1,22 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
-import { ShieldXIcon, TriangleAlertIcon } from 'lucide-react'
-import { isAxiosError } from 'axios'
 import type { ErrorComponentProps } from '@tanstack/react-router'
-import { AuthUnavailableError } from '@/features/auth/api/auth.queries'
-import { authKeys } from '@/features/auth/api/auth.keys'
-import { Button } from '@/shared/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
+import { isAxiosError } from 'axios'
+import { ShieldXIcon, TriangleAlertIcon } from 'lucide-react'
+import { AuthUnavailableError, authKeys } from '@/features/auth'
 import { getMessageFromError } from '@/shared/lib/utils'
-
-interface AuthErrorProps extends ErrorComponentProps {
-  /**
-   * Optional callback for navigating the user to the login screen
-   * after a confirmed auth failure. If not provided, the
-   * "Перейти ко входу" button is hidden.
-   */
-  onLoginRedirect?: () => void
-}
+import { Button } from '@/shared/ui/button'
+import { PageState } from '@/shared/ui/page-state'
 
 function isAuthUnavailable(error: unknown): boolean {
   return error instanceof AuthUnavailableError
@@ -68,50 +58,38 @@ function resolvePresentation(error: unknown): ErrorPresentation {
 }
 
 /**
- * errorComponent for routes that gate on `ensureQueryData(meQueryOptions())`.
+ * Route error UI for failures from a fresh `meQueryOptions()` request.
  *
- * Three error categories:
- * 1. AuthUnavailableError → server is unreachable. Show retry button.
- * 2. AxiosError with 401 → confirmed logged out. Show "Go to login" button.
- * 3. Anything else → unexpected. Show generic "try again" prompt.
+ * AuthUnavailableError is retryable, a confirmed 401 leads to login, and
+ * unexpected failures retain a generic recovery action.
  */
-export function AuthError({ error, reset, onLoginRedirect }: AuthErrorProps) {
+export function AuthError({ error, reset }: ErrorComponentProps) {
   const queryClient = useQueryClient()
   const router = useRouter()
   const unauthorized = isConfirmedUnauthorized(error)
-  const { title, description, icon: Icon } = resolvePresentation(error)
+  const { title, description, icon } = resolvePresentation(error)
 
-  const handleRetry = () => {
-    void queryClient.invalidateQueries({ queryKey: authKeys.all })
+  const handleRetry = async () => {
+    await queryClient.invalidateQueries({ queryKey: authKeys.all })
     reset()
   }
 
-  const handleLoginRedirect = () => {
-    if (onLoginRedirect) {
-      onLoginRedirect()
-      return
-    }
-
-    void router.navigate({ to: '/login' })
+  const handleLoginRedirect = async () => {
+    queryClient.removeQueries({ queryKey: authKeys.all })
+    await router.navigate({ to: '/login', replace: true })
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-            <Icon
-              className="size-6"
-              aria-hidden="true"
-            />
-          </div>
-          <CardTitle className="mt-2">{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
+    <PageState
+      icon={icon}
+      title={title}
+      description={description}
+      tone="destructive"
+      actions={
+        <div className="flex flex-col gap-2">
           <Button
             type="button"
-            onClick={handleRetry}
+            onClick={() => void handleRetry()}
             aria-label="Повторить попытку"
           >
             Повторить
@@ -120,13 +98,13 @@ export function AuthError({ error, reset, onLoginRedirect }: AuthErrorProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={handleLoginRedirect}
+              onClick={() => void handleLoginRedirect()}
             >
               Перейти ко входу
             </Button>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      }
+    />
   )
 }

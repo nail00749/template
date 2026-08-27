@@ -19,15 +19,18 @@ for (const item of items) {
 }
 ```
 
-- One component per file
-- Props via `interface`, not `type`
-- All imports via `@/` alias
+- One exported component per file. Small private render helpers may stay
+  co-located when they have no independent responsibility.
+- Exported component props use `interface`, not `type`.
+- Use relative imports inside one feature/widget/shared module. Use `@/` for
+  imports across slices or layers. External packages keep package imports.
 
 ## TypeScript
 
 - `strict: true` is enforced — no workarounds
 - Never use `any` — use `unknown` or proper generics
-- Never use type assertions (`as X`) except when working with Orval-generated code where the shape is guaranteed
+- Avoid type assertions (`as X`). At a validated/generated boundary, keep an
+  unavoidable assertion local and document the runtime guarantee.
 - `noUnusedLocals` and `noUnusedParameters` are enforced — remove dead code.
   Underscore-prefix (`_payload`, `_result`) разрешён **только** для обязательных
   позиционных параметров callback-функций (например, `onSuccess: (_r, _p) => ...`),
@@ -57,18 +60,16 @@ Use `sonner` for toasts. Always extract error messages via `getMessageFromError`
 import { toast } from 'sonner'
 import { getMessageFromError } from '@/shared/lib/utils'
 
-try {
-  await mutation.mutateAsync(payload)
-  toast.success('Сохранено')
-} catch (e) {
-  toast.error(getMessageFromError(e))
-}
+await mutation.mutateAsync(payload)
+toast.success('Сохранено')
 ```
 
-- Never use `e.message` directly — it won't handle Axios/API error shapes
-- Always show `toast.success` after successful mutations — глобальный toast.error
-  уже показывает ошибки (см. `.docs/error-handling.md`), но успех нужно
-  подтверждать явно. Стандартная строка: `'Сохранено'` / `'Создано'` / `'Удалено'`.
+- Never use `e.message` directly — it won't handle Axios/API error shapes.
+- Mutation errors use the global toast by default. A local error toast is
+  allowed only after `meta: { disableToast: true }`; see
+  `.docs/error-handling.md`.
+- Show `toast.success` after successful user-visible mutations. Standard text:
+  `'Сохранено'` / `'Создано'` / `'Удалено'`.
 - For floating promises (e.g. `invalidateQueries`), prefix with `void`:
 
 ```ts
@@ -91,7 +92,8 @@ Never call `date-fns/format` directly or use `toLocaleDateString()`.
 
 ## Presentation Files
 
-Display-only logic (labels, badge variants, status mappers) lives in `*Presentation.ts` next to the component:
+Data-driven display logic (enum/status label maps, badge variants, repeated
+option arrays) lives in `*Presentation.ts` next to the component:
 
 ```ts
 // checklistVersionPresentation.ts
@@ -102,17 +104,25 @@ export const VERSION_STATUS_LABELS: Record<ChecklistVersionStatus, string> = {
 }
 
 export const getVersionStatusBadgeVariant = (status: ChecklistVersionStatus) => {
-  if (status === 'active') return 'default'
-  if (status === 'draft') return 'secondary'
+  if (status === 'active') {
+    return 'default'
+  }
+  if (status === 'draft') {
+    return 'secondary'
+  }
   return 'outline'
 }
 ```
 
-Never hardcode display strings or status → style mappings inside JSX.
+Do not hardcode enum/status mappings inside JSX. Ordinary one-off UI copy such
+as a button label or page heading may remain in JSX.
 
 ## Shared Utilities
 
 Before writing a helper, check `@/shared/lib`:
+
+Do not add unrelated helpers to `utils.ts`. Prefer a focused module when a new
+utility has its own responsibility.
 
 | Utility                 | Import                    | Use for                         |
 | ----------------------- | ------------------------- | ------------------------------- |

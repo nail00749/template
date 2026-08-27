@@ -222,6 +222,9 @@ Never write `z.string().min(1, { message: 'Обязательное поле' })
 - Use `validators.onSubmit` by default — no client-side `parse`/`safeParse` for validation
 - Use `validators.onChange` when a field renders validation state reactively, including `FileFieldForm`
 - Always `mutateAsync` inside `onSubmit`, never `mutate`
+- Do not catch `mutateAsync` only to repeat the global error toast. For a custom
+  field/toast error, first set `meta: { disableToast: true }` on the mutation;
+  see `.docs/error-handling.md`
 - Type `defaultValues` with `satisfies FormValues` or explicit type annotation
 - Wrap `SubmitButton` in `form.AppForm`
 - One Zod schema per form — it's the single source of truth

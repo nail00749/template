@@ -7,8 +7,8 @@ Use Orval-generated endpoints only. Never write manual axios/fetch clients.
 ```ts
 // <entity>.queries.ts
 import { queryOptions, mutationOptions } from '@tanstack/react-query'
-import { getLegal } from '@/features/legal/api/endpoints/legal/legal'
-import { legalKeys } from '@/features/legal/api/legal.keys'
+import { getLegal } from './endpoints/legal/legal'
+import { legalKeys } from './legal.keys'
 
 const api = getLegal()
 
@@ -59,14 +59,21 @@ Rules:
 
 Глобальные настройки — в `src/app/integrations/tanstack-query/root-provider.tsx`:
 
-- **Queries** — `retry` по умолчанию пропускает 4xx (кроме 408, 425) и
+- **Queries** — `retry` по умолчанию пропускает 4xx (кроме 408, 425, 429) и
   повторяет 5xx/сетевые ошибки с учётом `Retry-After`.
 - **Mutations** — `retry: false`, ошибки показываются через глобальный `onError`
   → `toast.error(getMessageFromError(error))`.
 
 Глобальный обработчик уже показывает toast на ошибки mutations. Не дублируй
-`toast.error` в `onError` каждой mutation — используй только если нужна
-кастомная логика (например, показать специфичное сообщение).
+`toast.error` в `onError`, `catch` формы или обработчике кнопки.
+
+Если UI должен показать специальное сообщение или привязать ошибку к полю:
+
+1. Добавь `meta: { disableToast: true }` в mutation options.
+2. Обработай ошибку локально ровно один раз.
+
+Success toast и навигация относятся к пользовательскому flow и остаются в
+`use<Feature>`/компоненте, а cache invalidation — в mutation options.
 
 Чтобы **подавить** глобальный toast для отдельной query/mutation, добавь
 `meta: { disableToast: true }`:
@@ -114,3 +121,7 @@ to DataGrid.
 - Always use `queryOptions` / `mutationOptions` wrappers — not raw `useQuery` options inline
 - Never manually type response shapes — import from generated `model.ts`
 - Orval regeneration: `bun run generate-api` — никогда не редактируй файлы в `api/endpoints/`
+- Query/mutation options own API binding and cache consistency; navigation,
+  dialogs, forms, and success feedback belong to the calling user flow
+- External consumers import query options through the feature's `index.ts`;
+  relative deep imports are allowed only inside the same feature slice

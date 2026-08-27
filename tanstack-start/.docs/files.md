@@ -75,7 +75,7 @@ Zod-схеме — Zod не имеет доступа к MIME-типу File в �
 ```ts
 import { getFileValidationErrorMessage } from '@/shared/lib/fileValidationErrorMessages'
 
-// В mutation onError или в компоненте ошибки
+// Для локальной обработки mutation должна иметь meta: { disableToast: true }
 const message = getFileValidationErrorMessage(error.code, 'Не удалось загрузить файл')
 toast.error(message)
 ```
@@ -107,5 +107,7 @@ useEffect(() => {
 - Не используй `z.instanceof(File)` для опциональных полей — добавляй
   `.optional()` или `.nullable()`.
 - После успешной загрузки показывай `toast.success(...)`.
-- Ошибки загрузки — `toast.error(getFileValidationErrorMessage(code))` или
-  `toast.error(getMessageFromError(error))` для сетевых ошибок.
+- По умолчанию ошибку загрузки показывает глобальный mutation handler.
+- Если нужен file-specific или field-level текст, установи
+  `meta: { disableToast: true }` и покажи ровно один локальный toast через
+  `getFileValidationErrorMessage`/`getMessageFromError`.

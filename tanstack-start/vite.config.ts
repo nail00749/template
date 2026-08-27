@@ -6,7 +6,6 @@ import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import { nitro } from 'nitro/vite'
 import { defineConfig, type PluginOption } from 'vite'
-import viteTsConfigPaths from 'vite-tsconfig-paths'
 
 const reactCompilerBabel = (await babel({
   presets: [reactCompilerPreset()],
@@ -24,6 +23,7 @@ const config = defineConfig({
     },
   },
   resolve: {
+    tsconfigPaths: true,
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
@@ -31,9 +31,6 @@ const config = defineConfig({
   plugins: [
     devtools(),
     nitro({ preset: 'bun' }),
-    viteTsConfigPaths({
-      projects: ['./tsconfig.json'],
-    }),
     tailwindcss(),
     tanstackStart({}),
     viteReact(),

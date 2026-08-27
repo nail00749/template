@@ -1,19 +1,14 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import {
-  flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
+import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
-import { memo, useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { LinkOptions } from '@tanstack/react-router'
-import type { JSX, MouseEvent } from 'react'
+import type { MouseEvent, ReactNode } from 'react'
 import type { OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/table-core'
 import { cn } from '@/shared/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
-import { Spinner } from '@/shared/ui/spinner.tsx'
+import { Skeleton } from '@/shared/ui/skeleton'
 import {
   Pagination,
   PaginationContent,
@@ -23,7 +18,7 @@ import {
   PaginationPrevious,
 } from '@/shared/ui/pagination'
 
-type DataGridRowLink<T> =
+export type DataGridRowLink<T> =
   | {
       kind: 'href'
       href: (row: T) => LinkOptions
@@ -33,11 +28,13 @@ type DataGridRowLink<T> =
       onClick: (row: T) => void
     }
 
-type Props<T> = {
+export interface DataGridProps<T> {
   columns: Array<ColumnDef<T>>
   rows: Array<T> | undefined
   totalCount: number | undefined
   isLoading?: boolean
+  isFetching?: boolean
+  emptyContent?: ReactNode
   pagination?: PaginationState
   onPaginationChange?: OnChangeFn<PaginationState>
   sorting?: SortingState
@@ -49,21 +46,65 @@ type Props<T> = {
 
 const DEFAULT_COLUMN_SIZE = 150
 
-const getColumnSize = (column: ColumnDef<unknown>): number => {
+const getColumnSize = <T,>(column: ColumnDef<T>): number => {
   const size = column.size
   return typeof size === 'number' ? size : DEFAULT_COLUMN_SIZE
 }
 
-const getTableMinWidth = (columns: Array<ColumnDef<unknown>>): number => {
+const getTableMinWidth = <T,>(columns: Array<ColumnDef<T>>): number => {
   return columns.reduce<number>((sum, column) => sum + getColumnSize(column), 0)
 }
 
-const Component = <T,>(props: Props<T>) => {
+function getResizeTransform(
+  isResizing: boolean,
+  direction: 'ltr' | 'rtl' | undefined,
+  deltaOffset: number | null | undefined,
+): string {
+  if (!isResizing) {
+    return ''
+  }
+
+  const directionMultiplier = direction === 'rtl' ? -1 : 1
+  return `translateX(${directionMultiplier * (deltaOffset ?? 0)}px)`
+}
+
+interface DataGridSkeletonRowsProps {
+  columnCount: number
+  rowCount: number
+}
+
+function DataGridSkeletonRows({ columnCount, rowCount }: DataGridSkeletonRowsProps) {
+  return Array.from({ length: rowCount }, (_, rowIndex) => (
+    <TableRow key={rowIndex}>
+      {Array.from({ length: columnCount }, (_, columnIndex) => (
+        <TableCell key={columnIndex}>
+          <Skeleton className="h-4 w-full" />
+        </TableCell>
+      ))}
+    </TableRow>
+  ))
+}
+
+function isInteractiveTarget(event: MouseEvent): boolean {
+  const target = event.target
+  if (!(target instanceof Element)) {
+    return false
+  }
+
+  const interactiveElement = target.closest(
+    'a, button, input, select, textarea, [role="button"], [role="link"]',
+  )
+  return interactiveElement !== null && interactiveElement !== event.currentTarget
+}
+
+export function DataGrid<T>(props: DataGridProps<T>) {
   const {
     columns,
     rows = [],
     totalCount = 0,
     isLoading,
+    isFetching,
+    emptyContent = 'Нет данных для отображения',
     pagination: paginationProp,
     onPaginationChange: onPaginationChangeProp,
     sorting: sortingProp,
@@ -83,8 +124,8 @@ const Component = <T,>(props: Props<T>) => {
   const sorting = sortingProp ?? sortingState
   const pagination = paginationProp ?? paginationState
 
-  const handleSortingChange = useMemo<OnChangeFn<SortingState>>(
-    () => (updater) => {
+  const handleSortingChange = useCallback<OnChangeFn<SortingState>>(
+    (updater) => {
       const nextSorting = typeof updater === 'function' ? updater(sorting) : updater
       if (onSortingChangeProp) {
         onSortingChangeProp(nextSorting)
@@ -95,8 +136,8 @@ const Component = <T,>(props: Props<T>) => {
     [onSortingChangeProp, sorting],
   )
 
-  const handlePaginationChange = useMemo<OnChangeFn<PaginationState>>(
-    () => (updater) => {
+  const handlePaginationChange = useCallback<OnChangeFn<PaginationState>>(
+    (updater) => {
       const nextPagination = typeof updater === 'function' ? updater(pagination) : updater
       if (onPaginationChangeProp) {
         onPaginationChangeProp(nextPagination)
@@ -111,9 +152,9 @@ const Component = <T,>(props: Props<T>) => {
     columns,
     data: rows,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     rowCount: totalCount,
     manualPagination: true,
+    manualSorting: true,
     columnResizeMode: 'onChange',
     defaultColumn: {
       minSize: 50,
@@ -130,21 +171,39 @@ const Component = <T,>(props: Props<T>) => {
     onPaginationChange: handlePaginationChange,
   })
 
-  const isEmpty = table.getRowModel().rows.length === 0 && !isLoading
+  const showSkeleton = Boolean(isLoading && rows.length === 0)
+  const isEmpty = table.getRowModel().rows.length === 0 && !showSkeleton
   const pageCount = table.getPageCount()
   const currentPage = pageCount === 0 ? 0 : pagination.pageIndex + 1
   const hasPagination = !hidePagination && pageCount > 1
   const pageStart = totalCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1
   const pageEnd =
     totalCount === 0 ? 0 : Math.min(pageStart + table.getRowModel().rows.length - 1, totalCount)
+  let dataSummary = `Показано ${pageStart}-${pageEnd} из ${totalCount}`
+  if (showSkeleton) {
+    dataSummary = 'Загрузка данных...'
+  } else if (totalCount === 0) {
+    dataSummary = 'Нет данных для отображения'
+  }
 
   return (
     <div className="w-full">
-      <div className="overflow-x-auto overflow-y-auto max-h-[600px] rounded-xl border border-gray-200 bg-card/95 text-card-foreground shadow-md">
+      <div
+        className="overflow-x-auto overflow-y-auto max-h-[600px] rounded-xl border border-gray-200 bg-card/95 text-card-foreground shadow-md"
+        aria-busy={Boolean(isLoading || isFetching)}
+      >
+        {isFetching && !showSkeleton && (
+          <span
+            className="sr-only"
+            role="status"
+          >
+            Обновление данных...
+          </span>
+        )}
         <Table
           className="table-fixed w-full"
           style={{
-            minWidth: getTableMinWidth(columns as Array<ColumnDef<unknown>>),
+            minWidth: getTableMinWidth(columns),
           }}
         >
           <TableHeader>
@@ -206,12 +265,11 @@ const Component = <T,>(props: Props<T>) => {
                           header.column.getIsResizing() ? 'bg-muted/70' : '',
                         ].join(' '),
                         style: {
-                          transform: header.column.getIsResizing()
-                            ? `translateX(${
-                                (table.options.columnResizeDirection === 'rtl' ? -1 : 1) *
-                                (table.getState().columnSizingInfo.deltaOffset ?? 0)
-                              }px)`
-                            : '',
+                          transform: getResizeTransform(
+                            header.column.getIsResizing(),
+                            table.options.columnResizeDirection,
+                            table.getState().columnSizingInfo.deltaOffset,
+                          ),
                         },
                       }}
                     />
@@ -221,35 +279,38 @@ const Component = <T,>(props: Props<T>) => {
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading && (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-32 text-center align-middle text-sm text-muted-foreground"
-                >
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <Spinner />
-                    <div>Загрузка данных...</div>
-                  </div>
-                </TableCell>
-              </TableRow>
+            {showSkeleton && (
+              <DataGridSkeletonRows
+                columnCount={columns.length}
+                rowCount={Math.min(pagination.pageSize, 5)}
+              />
             )}
 
-            {!isEmpty &&
+            {!showSkeleton &&
+              !isEmpty &&
               table.getRowModel().rows.map((row) => {
                 const linkProps = rowLink?.kind === 'href' ? rowLink.href(row.original) : null
                 const isClickable = linkProps !== null || rowLink?.kind === 'callback'
 
+                const handleRowClick = (event: MouseEvent<HTMLTableRowElement>) => {
+                  if (isInteractiveTarget(event)) {
+                    return
+                  }
+
+                  if (rowLink?.kind === 'callback') {
+                    rowLink.onClick(row.original)
+                    return
+                  }
+
+                  if (linkProps !== null) {
+                    void navigate(linkProps)
+                  }
+                }
+
                 return (
                   <TableRow
                     key={row.id}
-                    onClick={
-                      rowLink?.kind === 'callback'
-                        ? () => rowLink.onClick(row.original)
-                        : linkProps != null
-                          ? () => navigate(linkProps)
-                          : undefined
-                    }
+                    onClick={isClickable ? handleRowClick : undefined}
                     className={cn(isClickable && 'relative cursor-pointer')}
                   >
                     {row.getVisibleCells().map((cell, cellIndex) => {
@@ -267,14 +328,22 @@ const Component = <T,>(props: Props<T>) => {
                               {...linkProps}
                               aria-label="Открыть"
                               className="absolute inset-0 z-0 rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
-                              onClick={(e: MouseEvent) => e.stopPropagation()}
+                            />
+                          )}
+                          {isFirstCell && rowLink?.kind === 'callback' && (
+                            <button
+                              type="button"
+                              aria-label="Открыть"
+                              className="absolute inset-0 z-0 rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+                              onClick={() => rowLink.onClick(row.original)}
                             />
                           )}
                           <div
                             className={cn(
                               'relative',
                               !noTruncate && 'truncate',
-                              linkProps && 'z-10 pointer-events-none',
+                              isClickable &&
+                                'z-10 pointer-events-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_input]:pointer-events-auto [&_select]:pointer-events-auto [&_textarea]:pointer-events-auto',
                             )}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -291,7 +360,7 @@ const Component = <T,>(props: Props<T>) => {
                   colSpan={columns.length}
                   className="h-13 text-center align-middle text-sm text-muted-foreground"
                 >
-                  Нет данных для отображения
+                  {emptyContent}
                 </TableCell>
               </TableRow>
             )}
@@ -299,67 +368,62 @@ const Component = <T,>(props: Props<T>) => {
         </Table>
       </div>
 
-      <div className="flex flex-col gap-3 px-1 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-muted-foreground">
-          {totalCount === 0
-            ? 'Нет данных для отображения'
-            : `Показано ${pageStart}-${pageEnd} из ${totalCount}`}
+      {(showSkeleton || totalCount > 0) && (
+        <div className="flex flex-col gap-3 px-1 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-muted-foreground">{dataSummary}</div>
+
+          {hasPagination && (
+            <Pagination className="mx-0 w-auto justify-start sm:justify-end">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    text="Назад"
+                    aria-disabled={!table.getCanPreviousPage()}
+                    className={!table.getCanPreviousPage() ? 'pointer-events-none opacity-50' : ''}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      if (!table.getCanPreviousPage()) {
+                        return
+                      }
+                      table.previousPage()
+                    }}
+                  />
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationLink
+                    href="#"
+                    isActive
+                    size="default"
+                    onClick={(event) => {
+                      event.preventDefault()
+                    }}
+                  >
+                    {currentPage} / {pageCount}
+                  </PaginationLink>
+                </PaginationItem>
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    text="Вперед"
+                    aria-disabled={!table.getCanNextPage()}
+                    className={!table.getCanNextPage() ? 'pointer-events-none opacity-50' : ''}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      if (!table.getCanNextPage()) {
+                        return
+                      }
+                      table.nextPage()
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
-
-        {hasPagination && (
-          <Pagination className="mx-0 w-auto justify-start sm:justify-end">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  text="Назад"
-                  aria-disabled={!table.getCanPreviousPage()}
-                  className={!table.getCanPreviousPage() ? 'pointer-events-none opacity-50' : ''}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    if (!table.getCanPreviousPage()) {
-                      return
-                    }
-                    table.previousPage()
-                  }}
-                />
-              </PaginationItem>
-
-              <PaginationItem>
-                <PaginationLink
-                  href="#"
-                  isActive
-                  size="default"
-                  onClick={(event) => {
-                    event.preventDefault()
-                  }}
-                >
-                  {currentPage} / {pageCount}
-                </PaginationLink>
-              </PaginationItem>
-
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  text="Вперед"
-                  aria-disabled={!table.getCanNextPage()}
-                  className={!table.getCanNextPage() ? 'pointer-events-none opacity-50' : ''}
-                  onClick={(event) => {
-                    event.preventDefault()
-                    if (!table.getCanNextPage()) {
-                      return
-                    }
-                    table.nextPage()
-                  }}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        )}
-      </div>
+      )}
     </div>
   )
 }
-
-export const DataGrid = memo(Component) as <T>(props: Props<T>) => JSX.Element
-export type { DataGridRowLink }

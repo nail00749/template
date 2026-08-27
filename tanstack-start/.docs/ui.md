@@ -21,9 +21,12 @@ Use components from `@/shared/ui`.
 - **Data**: `DataGrid`, `table`, `pagination`, `cells/TruncatedCell`
 - **Branding**: `Logo`, `LogoMts`, `Picture`, `Typography`, `avatar`
 
-**Правило:** если нужного компонента нет — добавь в `@/shared/ui`, а не в
-`features/<domain>/ui/`. Локальные one-off компоненты допустимы только когда
-их использует ровно один компонент.
+Отсутствующий компонент не автоматически относится к `shared/ui`:
+
+- domain-specific или one-off компонент остаётся в `features/<domain>/ui`;
+- generic component сначала композируется из существующих primitives;
+- в `shared/ui` он переносится только при отсутствии business semantics и
+  реальном повторном использовании.
 
 ## Base UI — render prop instead of asChild
 
@@ -73,7 +76,15 @@ Use `Skeleton` from `@/shared/ui/skeleton` for loading pages and content. The
 placeholder must match the final layout, including detail pages, forms, and
 table content. Do not render empty content or use a generic spinner as the
 page-level loader. For `DataGrid`, pass its loading state through `isLoading` so
-the table can render its loading placeholders.
+the table can render its loading placeholders; use `isFetching` for background
+refetches while existing rows remain visible.
+
+## Full-page status
+
+Use `PageState` from `@/shared/ui/page-state` for generic full-page states such
+as root errors and not-found screens. It owns the accessible title, card layout,
+icon treatment, and optional action area. Domain-specific query states should
+remain inside their feature when they need domain-specific recovery or content.
 
 ## Controlled vs uncontrolled — verify the API first
 
@@ -170,9 +181,12 @@ const link = linkOptions({
 - Use shared/shadcn components instead of raw native controls in pages and
   features: use `Select`/`NativeSelect` instead of `<select>`, `DatePicker` (or
   `DatePickerForm`) instead of `<input type="date">`, and the existing shared
-  time component instead of `<input type="time">`. If an equivalent does not
-  exist, compose it from shared primitives or add it to `@/shared/ui` first.
-- If a component doesn't exist in `@/shared/ui`, check if it can be composed from existing ones before creating a new file.
+  time field component instead of `<input type="time">` when one exists. If an
+  equivalent does not exist, compose it from shared primitives locally first;
+  promote it only after the shared-component criteria below are met.
+- If a component doesn't exist in `@/shared/ui`, compose it from existing
+  primitives locally first. Promote it to shared only when it is generic and
+  demonstrably reused.
 - Use `cn()` helper for conditional class merging
 - Use Tailwind utility classes for layout and spacing
 - Avoid inline `style` objects

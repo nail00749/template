@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "overrides": [
+    {
+      "files": ["src/shared/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["@/app/*", "@/routes/*", "@/widgets/*", "@/features/*"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/features/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["@/app/*", "@/routes/*", "@/widgets/*", "@/features/*"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/widgets/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["@/app/*", "@/routes/*", "@/widgets/*", "@/features/*/*"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/app/**/*.{ts,tsx}", "src/routes/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": ["@/widgets/*/*", "@/features/*/*"]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,87 +1,100 @@
 # Error Handling
 
-## Глобальный Error Boundary
+## Single-owner rule
 
-`RootErrorBoundary` в `src/widgets/RootErrorBoundary/` — корневой `errorComponent`
-роутера. Ловит все необработанные ошибки рендера и loader'ов.
+Every error is presented once. Do not combine a global toast, a local toast,
+and an error boundary for the same failure.
+
+| Failure                                          | Default owner                                                                |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| Mutation (create/update/delete)                  | global mutation `onError` toast                                              |
+| Background/list query                            | global query toast plus the component's non-blocking error state when needed |
+| Loader/critical detail query                     | nearest route `errorComponent`                                               |
+| Missing/expired session                          | auth guard redirect or auth boundary                                         |
+| Error intentionally handled by a field/custom UI | local handler with global toast disabled                                     |
+
+## Mutation errors
+
+Global QueryClient configuration already calls:
 
 ```ts
-// __root.tsx
-export const Route = createRootRouteWithContext<MyRouterContext>()({
-  notFoundComponent: NotFound,
-  errorComponent: RootErrorBoundary,
-  // ...
-})
+toast.error(getMessageFromError(error))
 ```
 
-## Три категории ошибок
+The normal form flow therefore does not catch an error only to show another
+toast:
 
-`RootErrorBoundary` различает три типа:
+```ts
+onSubmit: async ({ value }) => {
+  await mutation.mutateAsync(value)
+  toast.success('Сохранено')
+}
+```
 
-1. **`AuthUnavailableError`** — сервер авторизации недоступен (network error
-   на /auth/me). Показывает «Сервер авторизации недоступен» + retry.
-2. **`AxiosError` 401** — подтверждённый logout. Показывает «Сессия истекла»
-   - кнопка «Перейти ко входу».
-3. **Всё остальное** — generic fallback с `getMessageFromError(error)`.
+When a mutation requires custom presentation, opt out first:
 
-## Loader Errors
+```ts
+const mutation = useMutation({
+  ...updateItemMutationOptions(),
+  meta: { disableToast: true },
+})
 
-Если `loader` бросает ошибку, она попадает в ближайший `errorComponent`.
+try {
+  await mutation.mutateAsync(value)
+} catch (error) {
+  toast.error(getMessageFromError(error))
+}
+```
+
+Never use `error.message` directly. Use `getMessageFromError(error)` for
+Axios/API/unknown error shapes.
+
+## Root error boundary
+
+`RootErrorBoundary` is the root router `errorComponent`. It distinguishes auth
+availability/401 failures from an unexpected application crash and provides a
+recovery action.
+
+Use the root boundary by default. Add a route-local `errorComponent` only when
+the surrounding layout can remain useful or the route needs a domain-specific
+recovery action.
 
 ```ts
 export const Route = createFileRoute('/items/$id')({
   loader: ({ params, context }) =>
     context.queryClient.ensureQueryData(itemQueries.detail(params.id)),
-  errorComponent: ItemErrorBoundary, // локальный, если нужен
+  errorComponent: ItemErrorBoundary,
 })
 ```
 
-По умолчанию используй глобальный `RootErrorBoundary`. Локальный `errorComponent`
-нужен только если ошибка не должна «убить» весь layout (например, список
-ошибок, а не детальная страница).
+Do not add a local boundary merely to repeat the global fallback.
 
-## Toast vs ErrorBoundary
+## Loader and query errors
 
-- **Mutation errors** (create/update/delete) — всегда `toast.error(...)`.
-  Это ожидаемые ошибки, пользователь может исправить ввод и повторить.
-- **Query errors** (load/fetch) — показываются в UI через error state или
-  error boundary, если страница не может рендериться без данных.
-- **Auth errors** — редирект на login через `beforeLoad`.
+- A loader error propagates to the nearest route boundary.
+- A non-blocking `useQuery` screen should render a retry/empty/error state when
+  the screen remains usable.
+- QueryClient may also show the default toast. Use
+  `meta: { disableToast: true }` when the local UI already presents the error.
+- Never replace a failed critical detail query with fake empty data.
 
-```ts
-// Правильно: mutation ошибка — toast
-onSubmit: async ({ value }) => {
-  try {
-    await mutation.mutateAsync(value)
-    toast.success('Сохранено')
-  } catch (e) {
-    toast.error(getMessageFromError(e))
-  }
-}
+## Auth errors
 
-// Неправильно: mutation ошибка — throw в error boundary
-// Пользователь потеряет форму и введённые данные
-```
+- An anonymous result from the auth guard redirects to `/login`.
+- An unavailable auth server is not the same as an anonymous user; it reaches
+  the auth error boundary with retry.
+- A frontend route guard is UX only. Backend authorization remains mandatory.
 
-## Retry-политика
+## Retry policy
 
-Глобальная retry-логика в `src/app/integrations/tanstack-query/root-provider.tsx`:
+Global retry logic lives in
+`src/app/integrations/tanstack-query/query-retry.ts` and is wired into the
+QueryClient by `root-provider.tsx`:
 
-- **4xx** (кроме 408, 425) — не ретраим.
-- **5xx, 408, 425, 429** — ретраим (макс 2 раза, exponential backoff).
-- **Сетевые ошибки** (offline, ECONNRESET) — ретраим.
-- **`Retry-After` заголовок** — уважаем для 429/503, макс 30 секунд.
+- 4xx except 408/425/429 are not retried;
+- 5xx, 408, 425, 429, and network failures retry at most twice;
+- `Retry-After` is respected with a 30-second cap.
 
-Никогда не переопределяй `retry` локально без явной причины.
-
-## getMessageFromError
-
-Всегда используй `getMessageFromError` из `@/shared/lib/utils` для toast'ов.
-Она обрабатывает AxiosError, Error, и unknown-объекты.
-
-```ts
-import { getMessageFromError } from '@/shared/lib/utils'
-
-toast.error(getMessageFromError(error))
-// Не: toast.error(error.message) — не сработает для AxiosError
-```
+Do not override `retry` locally without a documented reason.
+Keep the focused retry-policy tests passing when these statuses or delays
+change.

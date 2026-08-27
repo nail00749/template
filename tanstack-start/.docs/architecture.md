@@ -1,121 +1,177 @@
 # Architecture
 
-## FSD Structure
+## Architecture model
 
-```
+The project uses an **FSD-inspired, domain-oriented architecture**. It is not a
+strict copy of every FSD layer: `features/<domain>` is a vertical domain module
+that may contain API integration, model code, hooks, and its screen entry
+points. Follow this document instead of applying a different FSD variant from
+memory.
+
+```text
 src/
-├── app/        — providers, integrations (QueryClient, Devtools), global config
-├── routes/     — file-based routes (thin, no business logic)
-├── features/   — domain features (api, ui, model, hooks)
-├── widgets/    — page-level compositions (layouts, error boundaries)
-├── shared/     — ui, form, dialog, lib, hooks, api, icons
+├── app/        — bootstrap, providers, integrations, global configuration
+├── routes/     — TanStack Router adapters; no screen implementation
+├── widgets/    — optional cross-domain/app-wide compositions and layouts
+├── features/   — isolated domain modules (api, model, hooks, ui)
+└── shared/     — domain-agnostic infrastructure, UI kit, forms and utilities
 ```
 
-## Layer Rules
+Do not create additional top-level architectural layers without an explicit
+decision recorded in this document.
 
-- `shared` — самостоятельный слой, не импортирует ничего из других слоёв.
-- `features` — может импортировать из `shared` и между собой (один домен — один feature).
-- `widgets` — может импортировать из `features` и `shared`; не содержит бизнес-логику.
-- `routes` — тонкие файлы роутов; импортируют `features`/`widgets` напрямую.
-- `app` — провайдеры (`root-provider.tsx`, Devtools), глобальные контексты.
+## Dependency direction
 
-## app/ layer
-
-`src/app/` содержит:
-
-- `providers/index.tsx` — обёртка всех провайдеров (DialogProvider, TooltipProvider и т.д.).
-- `integrations/tanstack-query/root-provider.tsx` — создание `QueryClient` с глобальными `defaultOptions` (retry, error handling, toast).
-
-## features/ layer
-
-Каждый домен — отдельная папка в `features/`:
-
+```text
+app/routes -> widgets -> features -> shared
 ```
+
+- `shared` imports only from `shared` and external packages. The sole explicit
+  exception is validated environment access through `@/env`.
+- A feature imports from its own slice and `shared`.
+- A feature **must not import another feature**. If two domains participate in
+  one screen, compose them in a widget or route-level adapter.
+- A widget may import multiple features and `shared`.
+- Routes may import public APIs of features/widgets and app routing utilities.
+- `app` wires providers and integrations; domain workflows do not live there.
+
+## Public APIs
+
+Every feature and widget exposes an `index.ts`. Code outside the slice imports
+only from that entry point:
+
+```ts
+// Correct: external consumer uses the slice contract
+import { TemplatesPage, adminQueries } from '@/features/admin'
+
+// Wrong: reaches into another slice's implementation
+import { TemplatesPage } from '@/features/admin/ui/TemplatesPage'
+```
+
+Inside the same slice, use relative imports. Shared has no top-level barrel;
+import from a focused shared module such as `@/shared/ui/button` or
+`@/shared/lib/formatDate`.
+
+Public APIs should be small. Do not export internal helpers preemptively.
+
+These dependency and deep-import rules are enforced by `.oxlintrc.json`. Do not
+disable the rule for a new import; move composition to the correct layer or
+extend the slice's intentional public API.
+
+## Route ownership
+
+Routes are adapters. They may:
+
+- define `validateSearch`, `beforeLoad`, `loader`, `head`, and route metadata;
+- read `Route.useParams()` / `Route.useSearch()` in a small adapter component;
+- pass validated params/search to a feature or widget entry point;
+- render an imported layout or screen.
+
+Routes must not contain page markup, forms, mutations, table columns, navigation
+menus, or domain event handlers. A feature/widget must not import a `Route`
+object; route values flow downward through props.
+
+## Feature structure
+
+```text
 src/features/<domain>/
+├── index.ts                    — public API
 ├── api/
-│   ├── endpoints/     — Orval generated (do not edit)
-│   ├── model.ts       — re-exports from generated
-│   ├── <domain>.keys.ts   — query key factory
-│   └── <entity>.queries.ts — queryOptions / mutationOptions
-├── hooks/             — domain-specific hooks (useLogout, useEntityForm)
-├── model/             — search schemas, mappers, types
-└── ui/
-    └── <sub-feature>/
-        ├── SomePage.tsx
-        └── SomeDialog.tsx
+│   ├── endpoints/             — Orval generated; do not edit
+│   ├── model/                 — Orval generated; do not edit
+│   ├── <domain>.keys.ts       — query-key factory
+│   └── <subject>.queries.ts   — queryOptions/mutationOptions
+├── hooks/                     — domain orchestration hooks
+├── model/                     — schemas, mappers, domain constants
+└── ui/                        — screens and domain UI
 ```
 
-- **api/** — взаимодействие с бэкендом: query keys, queries, mutations.
-- **hooks/** — хуки, специфичные для домена (не универсальные из `shared/hooks`).
-- **model/** — search-схемы, мапперы, типы, константы (не UI).
-- **ui/** — компоненты и страницы.
+Create a file only when its responsibility exists. Do not create empty segment
+folders or speculative abstractions.
 
-## Page Components and Logic
+## Responsibility ownership
 
-- A page component is the feature's UI entry point and may call its
-  `use<Feature>` hook directly.
-- Do not create a proxy page component that only calls a hook and forwards its
-  result to a `<PageName>View` component:
+| Location                | Owns                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------- |
+| `api/*.queries.ts`      | request binding, query keys, cache consistency/invalidation                     |
+| `model/`                | schemas, URL-to-API mappers, domain state and calculations                      |
+| `hooks/use<Feature>.ts` | form/query/mutation orchestration, navigation, dialogs, handlers, derived state |
+| screen component        | composition and rendering                                                       |
+| route                   | URL contract, guard, loader, metadata                                           |
+| `shared`                | domain-agnostic infrastructure only                                             |
 
-  ```tsx
-  // Wrong: the extra component and View layer add no value
-  export function IdentityMappingsPage() {
-    const page = useIdentityMappingsPage()
+Do not duplicate cache invalidation in a screen if mutation options already own
+it. Do not wrap every query in a custom hook; add a hook when it coordinates a
+user flow or hides meaningful domain behavior.
 
-    return <IdentityMappingsPageView {...page} />
-  }
-  ```
+## Screen components and hooks
 
-- Do not create a `<PageName>View` component by default. Keep the page JSX in
-  `<PageName>` unless the view is genuinely reusable or the page is large
-  enough that splitting it improves readability.
-- Separate non-presentational page logic into a co-located
-  `use<Feature>` hook when the page contains queries, mutations, form setup,
-  navigation, event handlers, or substantial derived state.
-- Simple local UI state and trivial event handlers may stay in the component;
-  a hook is not required for every component.
+- A screen may call its co-located `use<Feature>` hook and render JSX directly.
+- Extract queries, mutations, forms, navigation, substantial handlers, and
+  derived state into the hook when the screen becomes non-trivial.
+- Trivial local UI state and one-line handlers may remain in the component.
+- Do not create a proxy component that only forwards hook output to
+  `<PageName>View`.
+- Split a view only when it is reused or a genuinely large screen becomes
+  clearer.
 
 Typical structure:
 
-```
+```text
 features/posts/ui/create-post/
-├── CreatePostPage.tsx   — calls useCreatePost and renders the page
-└── useCreatePost.ts     — queries, mutations, form and page behavior
+├── CreatePostPage.tsx
+└── useCreatePost.ts
 ```
 
-## Model Files
+## Widgets
 
-`features/<domain>/model/` contains search schemas and API param mappers — not components, not hooks:
+Widgets are optional. Use them for stable app-wide layouts, error boundaries,
+or cross-domain composition. Do not move a single-domain screen into widgets
+just because it is visually large, and do not put reusable domain logic there.
 
-```
-features/legal/model/
-├── checked-contracts-search.ts   — schema + mapper for route search params
-├── suggestions-search.ts
-└── legal-metrics-search.ts
-```
+## Shared placement
 
-Put a file here when:
+`shared` contains infrastructure without business semantics:
 
-- A route search schema needs a mapper function (`map*SearchToParams`)
-- The schema is shared between a route and a feature component
+- `ui/` — generic primitives and established reusable components;
+- `form/`, `dialog/` — generic form/dialog infrastructure;
+- `api/` — transport client and multipart helpers;
+- `hooks/` — domain-agnostic hooks;
+- `lib/` — focused utilities;
+- `styles/` — global styles and fonts.
 
-## Presentation Files
+A component missing from `shared/ui` does not automatically belong there. Keep
+a one-off domain component in its feature. Promote it to shared only when it is
+domain-agnostic and has real reuse.
 
-Display-only logic (label maps, badge variant selectors) lives in `*Presentation.ts` co-located with the component:
+Avoid catch-all files such as `helpers.ts`, `types.ts`, or adding more unrelated
+functions to `shared/lib/utils.ts`. Prefer focused names such as
+`format-date.ts` or `get-message-from-error.ts`.
 
-```
-features/legal/ui/checklist-versions/
-├── ChecklistVersionsPage.tsx
-├── checklistVersionPresentation.ts   ← labels, badge variants
-└── checklistItemPresentation.ts
-```
+## Server/client boundaries
 
-## Route Thinness
+- Put server-only implementation in `*.server.ts` or behind
+  `createIsomorphicFn`.
+- Never expose `SERVER_*` values through a client-importable return value.
+- Browser APIs (`window`, `document`, `File`, object URLs) require a client-safe
+  lifecycle and must not execute during SSR.
+- A new QueryClient/router instance must be created for every SSR request.
+- Never disable TLS certificate validation. Configure a trusted CA through the
+  server HTTPS-agent integration.
 
-Routes only:
+## Generated boundaries
 
-- call `useSearch` / `useParams`
-- render a feature page component
-- define `loader` / `validateSearch`
+Never edit `src/routeTree.gen.ts`, Orval endpoints, or Orval models. Handwritten
+query wrappers and public APIs live outside generated directories. Orval's
+`clean` option may delete any handwritten file placed inside its output.
 
-Never put hooks, mutations, or UI logic directly in route files.
+## Placement decision for agents
+
+Before creating code:
+
+1. Search the owning feature and `shared` for an existing implementation.
+2. If code has domain meaning, keep it in the owning feature.
+3. If multiple domains must be composed, use a widget.
+4. If code is generic infrastructure with demonstrated reuse, use `shared`.
+5. When uncertain, keep code local; extraction is easier than undoing a wrong
+   global abstraction.

@@ -1,18 +1,30 @@
 # Auth
 
-## Архитектура
+## Security boundary
 
-Аутентификация — через cookie-сессию (`withCredentials: true` в axios).
-Токен хранится в `httpOnly`-cookie, имя cookie — в `env.VITE_AUTH_HEADER`.
+Authentication uses an `httpOnly` cookie and Axios `withCredentials: true`.
+The cookie name comes from `env.VITE_AUTH_HEADER`.
 
-## Защита роутов
+A frontend route guard improves navigation UX; it is **not authorization**.
+The backend must authenticate and authorize every protected operation, including
+object-level permissions.
 
-Роуты, требующие авторизации, защищаются в `beforeLoad`:
+## Protected routes
+
+Auth guards must make a freshness decision explicitly. Calling
+`ensureQueryData` without revalidation can return an old cached user and is not
+a session check.
+
+For a guard that must verify the current session on every entry:
 
 ```ts
 export const Route = createFileRoute('/_admin')({
   beforeLoad: async ({ context }) => {
-    const auth = await context.queryClient.ensureQueryData(meQueryOptions())
+    const auth = await context.queryClient.fetchQuery({
+      ...meQueryOptions(),
+      staleTime: 0,
+    })
+
     if (!auth.user) {
       throw redirect({ to: '/login' })
     }
@@ -21,10 +33,12 @@ export const Route = createFileRoute('/_admin')({
 })
 ```
 
-- Используй `ensureQueryData(meQueryOptions())`, а не прямой вызов API.
-- Если `auth.user` отсутствует — `throw redirect({ to: '/login' })`.
-- Публичные роуты (`/login`) делают reverse-проверку: редирект на `/`, если
-  пользователь уже авторизован.
+- Use the same pattern for the reverse `/login` check.
+- An anonymous response redirects to `/login`.
+- A network/auth-service failure must throw and reach `AuthError`; never convert
+  it to an anonymous response.
+- If per-navigation verification becomes too expensive, change the guard's
+  explicit stale-time contract here; do not rely on accidental cache behavior.
 
 ## meQueryOptions
 
@@ -33,47 +47,51 @@ export const meQueryOptions = () =>
   queryOptions({
     queryKey: authKeys.me(),
     queryFn: () => api.getMe(),
-    staleTime: 1000 * 60 * 5, // 5 минут
+    staleTime: 1000 * 60 * 5,
   })
 ```
 
-- Ключ: `authKeys.me()`.
-- staleTime: 5 минут (сессия не меняется часто).
-- Не используй `refetchOnWindowFocus` для me — при возврате на вкладку будет
-  лишний запрос. Вместо этого роуты сами вызывают `ensureQueryData` при
-  навигации.
+The five-minute `staleTime` is suitable for ordinary UI consumers. Auth guards
+override it with `staleTime: 0` when a synchronous session check is required.
 
-## Ошибки 401
+Do not enable `refetchOnWindowFocus` for `me` without a product decision: an
+unexpected focus refetch can replace the current screen with an auth error.
 
-Axios перехватчик в `@/shared/api/client.ts` **не** делает автоматический
-редирект на login. Редирект происходит двумя путями:
+## Login/logout cache transitions
 
-1. **На уровне роута** — `beforeLoad` бросает `redirect({ to: '/login' })`.
-2. **На уровне UI** — `RootErrorBoundary` ловит `AuthError` (см.
-   `.docs/error-handling.md`).
+Auth mutations must update both server state and client routing state:
 
-## useLogout
+- After login, refresh/set `authKeys.me()`, invalidate the router so guards see
+  the new user, then navigate to the intended protected route.
+- After logout, remove auth queries before navigating to `/login`; use
+  `replace: true` and invalidate the router when needed.
+- Do not leave a successful authenticated `me` value in cache after logout.
+- Keep this cache transition inside the auth feature hook/mutation, not copied
+  into every button.
 
 ```ts
-const logoutMutation = useLogout({
-  onSuccess: () => {
-    router.navigate({ to: '/login', replace: true })
-  },
-})
+onSuccess: async () => {
+  queryClient.removeQueries({ queryKey: authKeys.all })
+  await router.navigate({ to: '/login', replace: true })
+}
 ```
 
-- После успешного logout — `navigate({ to: '/login', replace: true })`.
-- `replace: true` — чтобы нельзя было вернуться назад через browser back.
+## 401 handling
 
-## Файлы
+The Axios client does not redirect automatically. Redirect ownership remains
+with route guards and explicit auth flows. This avoids navigation side effects
+inside transport code and keeps SSR behavior deterministic.
 
-- `features/auth/api/auth.queries.ts` — meQueryOptions
-- `features/auth/api/auth.keys.ts` — authKeys
-- `features/auth/api/auth.mutations.ts` — useLogout, useLogin
-- `features/auth/hooks/useLogout.ts` — обёртка над mutation
+`RootErrorBoundary`/`AuthError` may present a confirmed 401 encountered while a
+critical route is loading. Mutation errors continue to follow the global toast
+rules from `.docs/error-handling.md`.
 
-## SSR Cookie
+## SSR cookie forwarding
 
-На сервере axios автоматически проксирует auth-cookie из входящего запроса
-в исходящий (см. `getServerCookieHeader` в `@/shared/api/client.ts`). Это
-позволяет делать авторизованные запросы из loader.
+On the server, the API client forwards only the configured auth cookie from the
+incoming request. A new QueryClient/router is created for each SSR request, so
+one user's cached auth data cannot leak into another request.
+
+Never log cookie values, expose them to client code, or disable TLS certificate
+validation. Development certificates must be trusted through the configured CA
+chain.

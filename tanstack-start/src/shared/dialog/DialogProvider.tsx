@@ -1,8 +1,8 @@
-import React, { createContext, useContext } from 'react'
+import { createContext, useContext } from 'react'
 import { useDialogManager } from './useDialog'
 import type { ReactNode } from 'react'
 import type { DialogManagerReturn } from './useDialog'
-import { DialogRenderer } from '@/shared/dialog/Dialogrenderer'
+import { DialogRenderer } from './DialogRenderer'
 
 const DialogContext = createContext<DialogManagerReturn | undefined>(undefined)
 
@@ -10,7 +10,7 @@ export interface DialogProviderProps {
   children: ReactNode
 }
 
-export const DialogProvider: React.FC<DialogProviderProps> = ({ children }) => {
+export function DialogProvider({ children }: DialogProviderProps) {
   const dialogManager = useDialogManager()
 
   return (
@@ -25,20 +25,10 @@ export const DialogProvider: React.FC<DialogProviderProps> = ({ children }) => {
   )
 }
 
-export const useDialog = (): DialogManagerReturn => {
+export function useDialog(): DialogManagerReturn {
   const context = useContext(DialogContext)
   if (!context) {
     throw new Error('useDialog must be used within DialogProvider')
   }
   return context
-}
-
-export const DialogOutlet: React.FC = () => {
-  const dialogManager = useDialog()
-  return (
-    <DialogRenderer
-      dialogs={dialogManager.dialogs}
-      onClose={dialogManager.close}
-    />
-  )
 }

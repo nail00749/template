@@ -26,7 +26,9 @@ const columns: Array<ColumnDef<Item>> = [
 function MyPage() {
   const { sorting, onSortingChange, pagination, onPaginationChange } = useDataGridState()
 
-  const { data, isLoading } = useQuery(itemsQueryOptions({ ...sortState, ...paginationState }))
+  const { data, isLoading, isFetching } = useQuery(
+    itemsQueryOptions({ ...sortState, ...paginationState }),
+  )
 
   return (
     <DataGrid
@@ -34,6 +36,7 @@ function MyPage() {
       rows={data?.items}
       totalCount={data?.total}
       isLoading={isLoading}
+      isFetching={isFetching}
       sorting={sorting}
       onSortingChange={onSortingChange}
       pagination={pagination}
@@ -108,35 +111,38 @@ The stretched link uses `z-0`; cell content stacks above it in the normal flow. 
 
 ## Empty State
 
-DataGrid показывает empty state из коробки. Кастомный empty state
-(с CTA для создания первого элемента) используй только когда
-`isLoading === false` и данных нет:
+DataGrid показывает empty state из коробки. Для кастомного содержимого передай
+`emptyContent`; DataGrid сам не покажет его во время initial loading:
 
 ```tsx
-if (!isLoading && (rows?.length ?? 0) === 0) {
-  return <EmptyState action={<Button>Создать первый</Button>} />
-}
-
-return <DataGrid ... />
+<DataGrid
+  {...props}
+  emptyContent={<EmptyState action={<Button>Создать первый</Button>} />}
+/>
 ```
 
-Никогда не показывай empty state во время загрузки — для загрузки используй
-`isLoading` (таблица сама рисует skeleton placeholders).
+Никогда не показывай empty state во время загрузки — передавай `isLoading` для
+первой загрузки и `isFetching` для фонового обновления. DataGrid сохраняет
+старые строки во время refetch и объявляет обновление assistive technology.
 
 ## Filtering via Search Params
 
 Фильтры таблицы — в URL search params (см. `.docs/router.md`):
 
 ```tsx
-// routes/admin/items/index.tsx
+// routes/admin/items/index.tsx — adapter
 export const Route = createFileRoute('/admin/items/')({
   validateSearch: itemsSearchSchema,
-  component: ItemsPage,
+  component: ItemsRoute,
 })
 
-// features/items/ui/ItemsPage.tsx
-function ItemsPage() {
+function ItemsRoute() {
   const search = Route.useSearch()
+  return <ItemsPage search={search} />
+}
+
+// features/items/ui/ItemsPage.tsx
+function ItemsPage({ search }: ItemsPageProps) {
   const params = mapItemsSearchToParams(search)
   const gridState = useDataGridState()
 

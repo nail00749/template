@@ -33,6 +33,13 @@ const getBaseURL = createIsomorphicFn()
   .client(() => env.VITE_API_BASE_URL ?? '')
   .server(() => env.SERVER_API_BASE_URL ?? env.VITE_API_BASE_URL ?? '')
 
+const getHttpsAgentConfig = createIsomorphicFn()
+  .client(() => undefined)
+  .server(async () => {
+    const { getServerHttpsAgentConfig } = await import('./https-agent.server')
+    return getServerHttpsAgentConfig()
+  })
+
 export const AXIOS_INSTANCE = axios.create({
   baseURL: getBaseURL(),
   withCredentials: true,
@@ -97,25 +104,14 @@ const mergeCookieHeader = (existingCookieHeader: unknown, cookieHeader: string) 
   return `${existingCookieHeader}; ${cookieHeader}`
 }
 
-let _ssrHttpsAgentInitialized = false
-async function ensureSsrHttpsAgent() {
-  if (_ssrHttpsAgentInitialized) return
-  _ssrHttpsAgentInitialized = true
-  if (import.meta.env.SSR && !import.meta.env.PROD) {
-    const { Agent } = await import('node:https')
-    AXIOS_INSTANCE.defaults.httpsAgent = new Agent({
-      rejectUnauthorized: false,
-    })
-  }
-}
-
 export const customInstance = async <T>(
   config: AxiosRequestConfig,
   options?: AxiosRequestConfig,
 ): Promise<T> => {
-  await ensureSsrHttpsAgent()
+  const httpsAgentConfig = await getHttpsAgentConfig()
   const requestConfig: AxiosRequestConfig = {
     ...config,
+    ...httpsAgentConfig,
     ...options,
   }
   const headers = AxiosHeaders.from(
@@ -123,13 +119,11 @@ export const customInstance = async <T>(
   )
   let forwardedCookieHeader: string | undefined
 
-  if (import.meta.env.SSR) {
-    const cookieHeader = await getServerCookieHeader()
+  const cookieHeader = await getServerCookieHeader()
 
-    if (cookieHeader) {
-      forwardedCookieHeader = mergeCookieHeader(headers.get('cookie'), cookieHeader)
-      headers.set('cookie', forwardedCookieHeader)
-    }
+  if (cookieHeader) {
+    forwardedCookieHeader = mergeCookieHeader(headers.get('cookie'), cookieHeader)
+    headers.set('cookie', forwardedCookieHeader)
   }
 
   const response = await AXIOS_INSTANCE({

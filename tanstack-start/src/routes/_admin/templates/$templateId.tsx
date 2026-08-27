@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { adminQueries } from '@/features/admin/api/admin.queries'
-import { TemplateDetailPage } from '@/features/admin/ui/TemplateDetailPage'
+import { TemplateDetailPage, adminQueries } from '@/features/admin'
 
 export const Route = createFileRoute('/_admin/templates/$templateId')({
   loader: ({ params, context }) => {

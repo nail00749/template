@@ -5,6 +5,7 @@ export const env = createEnv({
   server: {
     SERVER_URL: z.string(),
     SERVER_API_BASE_URL: z.string().optional(),
+    NODE_EXTRA_CA_CERTS: z.string().optional(),
   },
 
   /**
@@ -29,6 +30,7 @@ export const env = createEnv({
   runtimeEnv: {
     SERVER_URL: process.env.SERVER_URL,
     SERVER_API_BASE_URL: process.env.SERVER_API_BASE_URL,
+    NODE_EXTRA_CA_CERTS: process.env.NODE_EXTRA_CA_CERTS,
     NODE_ENV: process.env.NODE_ENV,
     ...import.meta.env,
   },
