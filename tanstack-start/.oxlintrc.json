@@ -2,23 +2,39 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "overrides": [
     {
-      "files": ["src/shared/**/*.{ts,tsx}"],
+      "files": [
+        "src/app/**/*.{ts,tsx}",
+        "src/routes/**/*.{ts,tsx}",
+        "src/router.tsx",
+        "src/client.tsx",
+        "src/routeTree.gen.ts"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
-            "patterns": ["@/app/*", "@/routes/*", "@/widgets/*", "@/features/*"]
+            "patterns": ["@/pages/*/*", "@/widgets/*/*", "@/features/*/*", "@/entities/*/*"]
           }
         ]
       }
     },
     {
-      "files": ["src/features/**/*.{ts,tsx}"],
+      "files": ["src/pages/**/*.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
-            "patterns": ["@/app/*", "@/routes/*", "@/widgets/*", "@/features/*"]
+            "patterns": [
+              "@/app/*",
+              "@/pages/*",
+              "@/widgets/*/*",
+              "@/features/*/*",
+              "@/entities/*/*",
+              "@/routes/*",
+              "@/router",
+              "@/client",
+              "@/routeTree.gen"
+            ]
           }
         ]
       }
@@ -29,18 +45,80 @@
         "no-restricted-imports": [
           "error",
           {
-            "patterns": ["@/app/*", "@/routes/*", "@/widgets/*", "@/features/*/*"]
+            "patterns": [
+              "@/app/*",
+              "@/pages/*",
+              "@/widgets/*",
+              "@/features/*/*",
+              "@/entities/*/*",
+              "@/routes/*",
+              "@/router",
+              "@/client",
+              "@/routeTree.gen"
+            ]
           }
         ]
       }
     },
     {
-      "files": ["src/app/**/*.{ts,tsx}", "src/routes/**/*.{ts,tsx}"],
+      "files": ["src/features/**/*.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
-            "patterns": ["@/widgets/*/*", "@/features/*/*"]
+            "patterns": [
+              "@/app/*",
+              "@/pages/*",
+              "@/widgets/*",
+              "@/features/*",
+              "@/entities/*/*",
+              "@/routes/*",
+              "@/router",
+              "@/client",
+              "@/routeTree.gen"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/entities/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@/app/*",
+              "@/pages/*",
+              "@/widgets/*",
+              "@/features/*",
+              "@/entities/*",
+              "@/routes/*",
+              "@/router",
+              "@/client",
+              "@/routeTree.gen"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              "@/app/*",
+              "@/pages/*",
+              "@/widgets/*",
+              "@/features/*",
+              "@/entities/*",
+              "@/routes/*",
+              "@/router",
+              "@/client",
+              "@/routeTree.gen"
+            ]
           }
         ]
       }

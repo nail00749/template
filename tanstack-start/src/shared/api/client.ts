@@ -1,7 +1,7 @@
 import { createIsomorphicFn } from '@tanstack/react-start'
 import axios, { AxiosHeaders } from 'axios'
 import type { AxiosError, AxiosRequestConfig, RawAxiosHeaders } from 'axios'
-import { env } from '@/env'
+import { env } from '@/shared/config/env'
 
 const ISO_DATE_REGEXP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/
 

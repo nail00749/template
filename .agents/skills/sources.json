@@ -1,0 +1,46 @@
+{
+  "installedAt": "2026-09-07",
+  "skills": [
+    {
+      "name": "shadcn",
+      "repository": "https://github.com/shadcn-ui/ui",
+      "revision": "5c7072da672b0048bc6771e3204063a2537df91a",
+      "path": "skills/shadcn",
+      "files": {
+        "SKILL.md": "deba6c5152d9835892fa7dffeb1fedbb689ddac7e59e14e57ec5eaf9463309e4",
+        "agents/openai.yml": "35db91b1eef58b2abe01da9b88577de5a44e233b740cd93d692ddeeadd2afe4d",
+        "assets/shadcn-small.png": "0ecc62d682727f68fc4937eed19960c706714fa084d44f63028d611ae02bf3d7",
+        "assets/shadcn.png": "7d60ad6fec4d89a0d44ba5a3c9283d2fea0047af5467f9227040e20d927d39b7",
+        "cli.md": "a381e35bf36fe7bb851952c13707e01e82434fd7a4a4e53f6df26c6370838904",
+        "customization.md": "84c1d47168c4b8adb5840e4af30a4e373ae3377c1110478c8974f398dd63f5ba",
+        "evals/evals.json": "58aca2760b0cc5265bb575f76cd8eed344b88544314b8cb2cd53e0b8007dc936",
+        "mcp.md": "8d696b4e45b7d0e337367248513bd9acebe8f3bcfd7b748c775e5a337c8f38c8",
+        "registry.md": "4f239be36bd2b58e17047db1ca80ab7da00e15a8b73242e5e4d50d113c4caa05",
+        "rules/base-vs-radix.md": "2b2deb47d004285220c1fc6b38bb2edc2d0ccbcdafd031b0b189d5d8ed0d1ba8",
+        "rules/chat.md": "de29c12524a27578a59ecf8c95ea939278c1a3572a3706bfc99f6f92cb770b7b",
+        "rules/composition.md": "f282df828d83a91132a846ddb62eea149a7c7c94822e9ca88cfddf85af01aa41",
+        "rules/forms.md": "29593e14381e34626f8e0e9c15c59f3394b92a0623af6a6ec94585400123853c",
+        "rules/icons.md": "d4a58266648872d9ee07d0c2368843a1cb88b8253b7f528dd7bda9d68b6c2535",
+        "rules/styling.md": "f88fbd72dff862805b786dc7d7e4c74c83030fc278c5b97c993e4e665001798c"
+      }
+    },
+    {
+      "name": "feature-sliced-design",
+      "repository": "https://github.com/feature-sliced/skills",
+      "revision": "e7eac044ee7405b0e82abe8e54cab7a1e9e8bc0c",
+      "path": "feature-sliced-design",
+      "files": {
+        "SKILL.md": "f4b5d047be1df020f5d00caa3643815b474c72170f5bf1bd5a39ef2f847d27ee",
+        "references/asset-handling.md": "031d795f4a864e79f3e15429b47cc735a0086d05e3eaf1be82bf5e1837d8b298",
+        "references/auth-and-api.md": "e1bf039c7022fb037d3c0dbfe047a4c718be2ed316687cb9b5715f7efcf8ac9d",
+        "references/cross-import-patterns.md": "1f5d95ca209ed59fdb9a5f63e0f8a0a6258872e8831908379c324a2858812000",
+        "references/excessive-entities.md": "926088dc96d9c3d65c89bcc7571fc655012cf328e527df9255681c4a619b1b85",
+        "references/framework-integration.md": "8afdcd2c6af25c37bacb70b0058e4df8d91954a718406d73e2d857bdbb378a29",
+        "references/growth-walkthrough.md": "f947f6d72b9bea3a3956155553581578848088cb7417d97f7f65a17dcc95bdca",
+        "references/layer-structure.md": "4b4813b364764622faa1f718bc091b243862ecb1af25584ec92cf162731979a7",
+        "references/migration-guide.md": "92180128b64c97db7c3d33458e210dd04153bdc59817bba8add9660499319ae4",
+        "references/state-management.md": "b85460b2f5538f56ba3f279723db317ae0e4e21d2e4218f78b8fe4460835f0f2"
+      }
+    }
+  ]
+}

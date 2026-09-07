@@ -1,23 +1,26 @@
 import { defineConfig } from 'orval'
 import type { InputOptions, OutputOptions } from '@orval/core'
 
-// Единый источник схемы. Локально — файл, в CI/по требованию — живой URL из .env.
-// OPENAPI_URL задаётся в .env (например https://mira.localhost/openapi.json).
-// Если не задан — падаем на закоммиченный локальный снапшот.
-const OPENAPI_SOURCE = process.env.OPENAPI_URL ?? './src/shared/api/openapi.json'
+// Схема загружается только с явно заданного URL и не хранится в репозитории.
+// OPENAPI_URL задаётся в окружении (например https://mira.localhost/openapi.json).
+const OPENAPI_SOURCE = process.env.OPENAPI_URL
 
-const featureInput = (tags: string[]): InputOptions => ({
+if (!OPENAPI_SOURCE) {
+  throw new Error('OPENAPI_URL is required to generate API clients')
+}
+
+const apiInput = (tags: string[]): InputOptions => ({
   target: OPENAPI_SOURCE,
   filters: {
     mode: 'include',
-    tags, // берём только нужные фиче эндпоинты — убирает дубли всего API
+    tags, // берём только эндпоинты нужной группы — убирает дубли всего API
   },
 })
 
-const featureOutput = (feature: string): OutputOptions => ({
+const apiOutput = (group: string): OutputOptions => ({
   mode: 'tags-split',
-  target: `./src/features/${feature}/api/endpoints/index.ts`,
-  schemas: `./src/features/${feature}/api/model`,
+  target: `./src/shared/api/${group}/endpoints/index.ts`,
+  schemas: `./src/shared/api/${group}/model`,
   client: 'axios',
   clean: true, // подчищает устаревшие сген-файлы при удалении эндпоинтов
   override: {
@@ -36,20 +39,20 @@ const featureOutput = (feature: string): OutputOptions => ({
   namingConvention: 'PascalCase',
 })
 
-const featureHooks = (feature: string) => ({
+const apiHooks = (group: string) => ({
   afterAllFilesWrite: [
-    `bunx oxfmt --write --ignore-path=.oxfmt-orval-ignore src/features/${feature}/api/`,
-    `bunx oxlint --fix src/features/${feature}/api/`,
+    `bunx oxfmt --write --ignore-path=.oxfmt-orval-ignore src/shared/api/${group}/`,
+    `bunx oxlint --fix src/shared/api/${group}/`,
   ],
 })
 
-const feature = (name: string, tags: string[]) => ({
-  input: featureInput(tags),
-  output: featureOutput(name),
-  hooks: featureHooks(name),
+const apiGroup = (name: string, tags: string[]) => ({
+  input: apiInput(tags),
+  output: apiOutput(name),
+  hooks: apiHooks(name),
 })
 
 export default defineConfig({
-  admin: feature('admin', ['admin', 'templates']),
-  auth: feature('auth', ['auth']),
+  admin: apiGroup('admin', ['admin', 'templates']),
+  auth: apiGroup('auth', ['auth']),
 })

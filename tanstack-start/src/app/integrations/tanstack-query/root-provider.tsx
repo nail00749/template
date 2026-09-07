@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getRetryDelay, shouldRetryQuery } from './query-retry'
-import { getMessageFromError } from '@/shared/lib/utils.ts'
+import { getMessageFromError } from '@/shared/lib/utils'
 
 function showErrorToast(error: unknown, meta: { disableToast?: boolean } | undefined) {
   if (meta?.disableToast) {

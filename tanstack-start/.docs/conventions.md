@@ -22,7 +22,7 @@ for (const item of items) {
 - One exported component per file. Small private render helpers may stay
   co-located when they have no independent responsibility.
 - Exported component props use `interface`, not `type`.
-- Use relative imports inside one feature/widget/shared module. Use `@/` for
+- Use relative imports inside one page/widget/feature/entity slice or shared module. Use `@/` for
   imports across slices or layers. External packages keep package imports.
 
 ## TypeScript
@@ -136,13 +136,13 @@ utility has its own responsibility.
 
 ## Shared Hooks
 
-Before rolling your own debounce / throttle / media-query logic in a component, check `@/shared/hooks`:
+Before rolling your own debounce / throttle / media-query logic in a component, check `@/shared/lib/hooks`:
 
-| Hook                | Import                                 | Use for                                                                                                  |
-| ------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `useDebouncedValue` | `@/shared/hooks/use-debounced-value`   | Debounce any value (search input, slider, etc.). Trailing edge, cleans up on unmount, defaults to 250ms. |
-| `useIsMobile`       | `@/shared/hooks/use-mobile`            | `true` below 768px viewport width                                                                        |
-| `useDataGridState`  | `@/shared/hooks/use-data-grid-sorting` | DataGrid pagination / sorting state bound to URL                                                         |
+| Hook                | Import                                     | Use for                                                                                                  |
+| ------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `useDebouncedValue` | `@/shared/lib/hooks/use-debounced-value`   | Debounce any value (search input, slider, etc.). Trailing edge, cleans up on unmount, defaults to 250ms. |
+| `useIsMobile`       | `@/shared/lib/hooks/use-mobile`            | `true` below 768px viewport width                                                                        |
+| `useDataGridState`  | `@/shared/lib/hooks/use-data-grid-sorting` | DataGrid pagination / sorting state bound to URL                                                         |
 
 ## Component Structure
 
@@ -156,8 +156,8 @@ No default exports for components — always named exports.
 
 ## Page and Hook Structure
 
-- Keep non-presentational logic separate from page JSX in a co-located
-  `use<Feature>` hook when that logic is non-trivial.
+- Keep non-trivial screen orchestration in a `use<PageName>` hook in the
+  page slice's `model/` segment; JSX stays in `ui/`.
 - The page component should call the hook and render its own JSX. Do not add a
   proxy component that only forwards hook output to `<PageName>View`.
 - Do not create `<PageName>View` automatically. Use a separate View component

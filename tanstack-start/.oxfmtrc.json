@@ -11,7 +11,7 @@
     "node_modules/",
     "bun.lock",
     "src/routeTree.gen.ts",
-    "src/features/*/api/endpoints/",
-    "src/features/*/api/model/"
+    "src/shared/api/*/endpoints/",
+    "src/shared/api/*/model/"
   ]
 }

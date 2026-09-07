@@ -1,177 +1,145 @@
-# Architecture
+# Архитектура
 
-## Architecture model
+Проект использует Feature-Sliced Design (FSD): верхние слои собирают нижние,
+а каждый slice скрывает внутреннюю реализацию за публичным `index.ts`.
+Термины «слой», «slice» и «segment» соответствуют официальному справочнику
+[FSD](https://fsd.how/docs/reference/layers/) и
+[правилам slices/segments](https://fsd.how/docs/reference/slices-segments/).
 
-The project uses an **FSD-inspired, domain-oriented architecture**. It is not a
-strict copy of every FSD layer: `features/<domain>` is a vertical domain module
-that may contain API integration, model code, hooks, and its screen entry
-points. Follow this document instead of applying a different FSD variant from
-memory.
+## Каноническая структура
 
 ```text
 src/
-├── app/        — bootstrap, providers, integrations, global configuration
-├── routes/     — TanStack Router adapters; no screen implementation
-├── widgets/    — optional cross-domain/app-wide compositions and layouts
-├── features/   — isolated domain modules (api, model, hooks, ui)
-└── shared/     — domain-agnostic infrastructure, UI kit, forms and utilities
+├── routes/                 — TanStack Router adapters (framework convention)
+├── router.tsx              — router factory (framework entry)
+├── client.tsx              — client entry (framework convention)
+├── routeTree.gen.ts        — generated route tree
+├── app/
+│   ├── providers/          — application providers
+│   ├── integrations/       — Query and devtools integrations
+│   ├── app.d.ts            — app typings
+│   └── styles/             — global CSS and fonts
+├── pages/
+│   ├── login/               — login screen
+│   ├── templates/           — templates list and its table
+│   └── template-detail/     — template detail and slide grid
+├── widgets/
+│   ├── admin-layout/         — app-wide admin layout
+│   ├── root-error-boundary/ — root error boundary
+│   └── not-found/           — not-found screen
+├── features/
+│   ├── edit-template/
+│   ├── upload-template/
+│   ├── delete-template/
+│   ├── reupload-template/
+│   ├── annotate-slide/
+│   ├── delete-slide/
+│   ├── sync-template/
+│   └── logout/
+├── entities/
+│   ├── session/              — auth API, keys, queries
+│   └── template/             — template API, keys, queries, SlidePreview
+└── shared/
+    ├── api/                  — transport and generated API clients/types
+    ├── config/               — env.ts
+    ├── lib/                  — focused utilities and hooks
+    └── ui/                   — primitives, forms and dialogs
 ```
 
-Do not create additional top-level architectural layers without an explicit
-decision recorded in this document.
+Empty layers and empty segments are not created. A segment is added only when
+the responsibility exists. Within a slice, `ui/` contains rendering,
+`model/` state and orchestration, and `api/` request bindings.
 
-## Dependency direction
+Dependency direction is:
 
 ```text
-app/routes -> widgets -> features -> shared
+app + routes → pages → widgets → features → entities → shared
 ```
 
-- `shared` imports only from `shared` and external packages. The sole explicit
-  exception is validated environment access through `@/env`.
-- A feature imports from its own slice and `shared`.
-- A feature **must not import another feature**. If two domains participate in
-  one screen, compose them in a widget or route-level adapter.
-- A widget may import multiple features and `shared`.
-- Routes may import public APIs of features/widgets and app routing utilities.
-- `app` wires providers and integrations; domain workflows do not live there.
+The direction is one-way. A lower layer never imports a higher layer; slices at
+the same layer do not import one another. A page may compose its own features,
+entities and shared UI. A widget may compose several features when that
+composition is genuinely cross-domain. Routes remain adapters.
 
 ## Public APIs
 
-Every feature and widget exposes an `index.ts`. Code outside the slice imports
-only from that entry point:
+External imports use a slice's public entry point:
 
 ```ts
-// Correct: external consumer uses the slice contract
-import { TemplatesPage, adminQueries } from '@/features/admin'
-
-// Wrong: reaches into another slice's implementation
-import { TemplatesPage } from '@/features/admin/ui/TemplatesPage'
+import { TemplatesPage } from '@/pages/templates'
+import { templateQueries } from '@/entities/template'
+import { UploadTemplateDialog } from '@/features/upload-template'
 ```
 
-Inside the same slice, use relative imports. Shared has no top-level barrel;
-import from a focused shared module such as `@/shared/ui/button` or
-`@/shared/lib/formatDate`.
+Imports such as `@/pages/templates/ui/TemplatesPage` or imports into another
+slice's `model/` are forbidden. Relative imports are for files inside the same
+slice or segment. `shared` has focused imports (`@/shared/ui/button`,
+`@/shared/lib/formatDate`) and no catch-all barrel.
 
-Public APIs should be small. Do not export internal helpers preemptively.
+The public entity contracts are stable:
 
-These dependency and deep-import rules are enforced by `.oxlintrc.json`. Do not
-disable the rule for a new import; move composition to the correct layer or
-extend the slice's intentional public API.
+- `entities/session` exports `authKeys`, `meQueryOptions`,
+  `AuthUnavailableError`, and `logoutMutationOptions`;
+- `entities/template` exports `templateKeys`, `templateQueries`,
+  `templateMutations`, and `SlidePreview`.
 
-## Route ownership
+`features/*/index.ts` exposes only the action entry points needed by pages or
+widgets. Internal hooks, forms and view helpers remain private.
 
-Routes are adapters. They may:
+## Ownership rules
 
-- define `validateSearch`, `beforeLoad`, `loader`, `head`, and route metadata;
-- read `Route.useParams()` / `Route.useSearch()` in a small adapter component;
-- pass validated params/search to a feature or widget entry point;
-- render an imported layout or screen.
+Pages own screen orchestration and page-specific markup. The templates page
+owns its table and columns; the template-detail page owns its slide grid.
+User actions are feature slices: edit, upload, delete, reupload, annotate,
+delete-slide, sync and logout. Domain data access belongs to its entity.
+Generic components and infrastructure belong to `shared`.
 
-Routes must not contain page markup, forms, mutations, table columns, navigation
-menus, or domain event handlers. A feature/widget must not import a `Route`
-object; route values flow downward through props.
+For new code, keep page-only logic in its page slice. Extract a feature when an
+action has a meaningful independent responsibility or is reused; do not create
+a feature for every button. Screen orchestration lives in `pages/*/model`,
+with JSX in `pages/*/ui`.
 
-## Feature structure
+The `shared/api/admin/{endpoints,model}` and
+`shared/api/auth/{endpoints,model}` trees contain Orval output. These files are
+moved byte-identically during the migration and must never be edited by hand.
+Handwritten `shared/api/admin.ts` and `shared/api/auth.ts` provide the focused
+client/type facade. Future regeneration still requires `OPENAPI_URL`.
 
-```text
-src/features/<domain>/
-├── index.ts                    — public API
-├── api/
-│   ├── endpoints/             — Orval generated; do not edit
-│   ├── model/                 — Orval generated; do not edit
-│   ├── <domain>.keys.ts       — query-key factory
-│   └── <subject>.queries.ts   — queryOptions/mutationOptions
-├── hooks/                     — domain orchestration hooks
-├── model/                     — schemas, mappers, domain constants
-└── ui/                        — screens and domain UI
-```
+## Routes and app wiring
 
-Create a file only when its responsibility exists. Do not create empty segment
-folders or speculative abstractions.
+Keep framework paths at their TanStack Start defaults. `routes/`, `router.tsx`,
+`client.tsx` and `routeTree.gen.ts` live directly under `src/` and belong to
+App logically. This integration boundary avoids custom framework path settings;
+it does not permit screen implementations or domain code at the source root.
 
-## Responsibility ownership
+Files under `routes` define the URL contract, search validation, metadata,
+loaders and auth guards, then render a public page or widget entry point. They
+must not contain page markup, table columns, forms, mutations or domain event
+handlers. A page or feature must not import a `Route` object.
 
-| Location                | Owns                                                                            |
-| ----------------------- | ------------------------------------------------------------------------------- |
-| `api/*.queries.ts`      | request binding, query keys, cache consistency/invalidation                     |
-| `model/`                | schemas, URL-to-API mappers, domain state and calculations                      |
-| `hooks/use<Feature>.ts` | form/query/mutation orchestration, navigation, dialogs, handlers, derived state |
-| screen component        | composition and rendering                                                       |
-| route                   | URL contract, guard, loader, metadata                                           |
-| `shared`                | domain-agnostic infrastructure only                                             |
+The root route additionally owns the HTML document shell and provider wiring.
 
-Do not duplicate cache invalidation in a screen if mutation options already own
-it. Do not wrap every query in a custom hook; add a hook when it coordinates a
-user flow or hides meaningful domain behavior.
+`router.tsx` creates a router per SSR request, `client.tsx` is the client
+entry, and `routeTree.gen.ts` is generated by TanStack Router. Global CSS
+and fonts live under `app/styles`.
 
-## Screen components and hooks
+## Server/client and generated boundaries
 
-- A screen may call its co-located `use<Feature>` hook and render JSX directly.
-- Extract queries, mutations, forms, navigation, substantial handlers, and
-  derived state into the hook when the screen becomes non-trivial.
-- Trivial local UI state and one-line handlers may remain in the component.
-- Do not create a proxy component that only forwards hook output to
-  `<PageName>View`.
-- Split a view only when it is reused or a genuinely large screen becomes
-  clearer.
+Server-only code uses `*.server.ts` or `createIsomorphicFn`; browser APIs must
+not execute during SSR. Read environment values only through
+`@/shared/config/env`. Never expose server secrets or disable TLS validation.
 
-Typical structure:
+Never edit `routeTree.gen.ts` or any Orval endpoint/model. Change route
+source files and run the project's generators when regeneration is required.
 
-```text
-features/posts/ui/create-post/
-├── CreatePostPage.tsx
-└── useCreatePost.ts
-```
+## Automated checks
 
-## Widgets
-
-Widgets are optional. Use them for stable app-wide layouts, error boundaries,
-or cross-domain composition. Do not move a single-domain screen into widgets
-just because it is visually large, and do not put reusable domain logic there.
-
-## Shared placement
-
-`shared` contains infrastructure without business semantics:
-
-- `ui/` — generic primitives and established reusable components;
-- `form/`, `dialog/` — generic form/dialog infrastructure;
-- `api/` — transport client and multipart helpers;
-- `hooks/` — domain-agnostic hooks;
-- `lib/` — focused utilities;
-- `styles/` — global styles and fonts.
-
-A component missing from `shared/ui` does not automatically belong there. Keep
-a one-off domain component in its feature. Promote it to shared only when it is
-domain-agnostic and has real reuse.
-
-Avoid catch-all files such as `helpers.ts`, `types.ts`, or adding more unrelated
-functions to `shared/lib/utils.ts`. Prefer focused names such as
-`format-date.ts` or `get-message-from-error.ts`.
-
-## Server/client boundaries
-
-- Put server-only implementation in `*.server.ts` or behind
-  `createIsomorphicFn`.
-- Never expose `SERVER_*` values through a client-importable return value.
-- Browser APIs (`window`, `document`, `File`, object URLs) require a client-safe
-  lifecycle and must not execute during SSR.
-- A new QueryClient/router instance must be created for every SSR request.
-- Never disable TLS certificate validation. Configure a trusted CA through the
-  server HTTPS-agent integration.
-
-## Generated boundaries
-
-Never edit `src/routeTree.gen.ts`, Orval endpoints, or Orval models. Handwritten
-query wrappers and public APIs live outside generated directories. Orval's
-`clean` option may delete any handwritten file placed inside its output.
-
-## Placement decision for agents
-
-Before creating code:
-
-1. Search the owning feature and `shared` for an existing implementation.
-2. If code has domain meaning, keep it in the owning feature.
-3. If multiple domains must be composed, use a widget.
-4. If code is generic infrastructure with demonstrated reuse, use `shared`.
-5. When uncertain, keep code local; extraction is easier than undoing a wrong
-   global abstraction.
+`bun run check` includes `bun run check:architecture`. Oxlint provides immediate
+feedback for alias imports; `scripts/check-architecture.ts` resolves local
+imports (including relative, dynamic and type imports) and checks layer
+direction, slice isolation, public entry points and generated API facades.
+It also rejects source files outside FSD layers and slices without `index.ts`,
+except for the standard Start entries listed above. Those entries and `routes/`
+are classified as app-level code; lower layers cannot import them.
+These checks enforce dependency boundaries; responsibility placement still
+requires code review.

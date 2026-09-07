@@ -1,11 +1,11 @@
 # Forms
 
-Import from `@/shared/form`.
+Import from `@/shared/ui/form`.
 
 ## Required Pattern
 
 ```tsx
-import { Form, useAppForm } from '@/shared/form'
+import { Form, useAppForm } from '@/shared/ui/form'
 import { requiredString } from '@/shared/lib/schemas'
 import { z } from 'zod'
 
@@ -120,7 +120,7 @@ export const profileFormOpts = formOptions({
 
 ```tsx
 // address-fields.tsx
-import { withForm } from '@/shared/form'
+import { withForm } from '@/shared/ui/form'
 import { profileFormOpts } from './profile-form-options'
 
 export const AddressFields = withForm({
@@ -141,7 +141,7 @@ export const AddressFields = withForm({
 
 ```tsx
 // profile-form.tsx
-import { Form, useAppForm } from '@/shared/form'
+import { Form, useAppForm } from '@/shared/ui/form'
 import { AddressFields } from './address-fields'
 import { profileFormOpts } from './profile-form-options'
 
@@ -187,7 +187,7 @@ child sections must not create their own form or duplicate validation.
 | `RadioGroupForm`         | Radio-группа        |
 | `FieldArrayForm`         | Повторяемые поля    |
 
-Перед использованием проверь `@/shared/form/index.ts` — список может пополняться.
+Перед использованием проверь `@/shared/ui/form/index.ts` — список может пополняться.
 
 ## Numeric fields
 

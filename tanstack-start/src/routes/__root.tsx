@@ -1,9 +1,9 @@
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
-import appCss from '@/shared/styles/styles.css?url'
+import appCss from '@/app/styles/styles.css?url'
 
-import { NotFound } from '@/widgets/NotFound'
-import { RootErrorBoundary } from '@/widgets/RootErrorBoundary'
+import { NotFound } from '@/widgets/not-found'
+import { RootErrorBoundary } from '@/widgets/root-error-boundary'
 import { Toaster } from '@/shared/ui/sonner'
 import { Providers } from '@/app/providers'
 

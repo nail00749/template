@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { meQueryOptions } from '@/features/auth'
-import { AdminLayout } from '@/widgets/AdminLayout'
+import { meQueryOptions } from '@/entities/session'
+import { AdminLayout } from '@/widgets/admin-layout'
 
 export const Route = createFileRoute('/_admin')({
   beforeLoad: async ({ context }) => {

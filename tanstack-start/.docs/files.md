@@ -2,7 +2,7 @@
 
 ## FileFieldForm
 
-Для загрузки файлов в форму используй `FileFieldForm` из `@/shared/form`:
+Для загрузки файлов в форму используй `FileFieldForm` из `@/shared/ui/form`:
 
 ```tsx
 <form.AppField name="attachment">

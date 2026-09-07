@@ -6,15 +6,15 @@ Import from `@/shared/ui/DataGrid`. Use for all new tables — never use raw `<T
 
 ```tsx
 import { DataGrid } from '@/shared/ui/DataGrid'
-import { useDataGridState } from '@/shared/hooks/use-data-grid-sorting'
-import type { ColumnDef } from '@tanstack/table-core'
+import type { DataGridColumnDef } from '@/shared/ui/DataGrid'
+import { useDataGridState } from '@/shared/lib/hooks/use-data-grid-sorting'
 
 interface Item {
   id: string
   name: string
 }
 
-const columns: Array<ColumnDef<Item>> = [
+const columns: Array<DataGridColumnDef<Item>> = [
   { accessorKey: 'name', header: 'Название' },
   {
     id: 'actions',
@@ -141,7 +141,7 @@ function ItemsRoute() {
   return <ItemsPage search={search} />
 }
 
-// features/items/ui/ItemsPage.tsx
+// pages/items/ui/ItemsPage.tsx
 function ItemsPage({ search }: ItemsPageProps) {
   const params = mapItemsSearchToParams(search)
   const gridState = useDataGridState()

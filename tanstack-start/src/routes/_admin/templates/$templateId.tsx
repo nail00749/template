@@ -1,9 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { TemplateDetailPage, adminQueries } from '@/features/admin'
+import { TemplateDetailPage } from '@/pages/template-detail'
+import { templateQueries } from '@/entities/template'
 
 export const Route = createFileRoute('/_admin/templates/$templateId')({
   loader: ({ params, context }) => {
-    return context.queryClient.ensureQueryData(adminQueries.templateDetail(params.templateId))
+    return context.queryClient.ensureQueryData(templateQueries.templateDetail(params.templateId))
   },
   head: ({ loaderData }) => {
     return {

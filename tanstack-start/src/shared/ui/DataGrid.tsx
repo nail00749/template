@@ -1,11 +1,25 @@
 import { Link, useNavigate } from '@tanstack/react-router'
-import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import {
+  columnResizingFeature,
+  columnSizingFeature,
+  columnVisibilityFeature,
+  flexRender,
+  rowPaginationFeature,
+  rowSortingFeature,
+  tableFeatures,
+  useTable,
+} from '@tanstack/react-table'
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import type { LinkOptions } from '@tanstack/react-router'
 import type { MouseEvent, ReactNode } from 'react'
-import type { OnChangeFn, PaginationState, SortingState } from '@tanstack/react-table'
-import type { ColumnDef } from '@tanstack/table-core'
+import type {
+  ColumnDef,
+  OnChangeFn,
+  PaginationState,
+  RowData,
+  SortingState,
+} from '@tanstack/react-table'
 import { cn } from '@/shared/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table'
 import { Skeleton } from '@/shared/ui/skeleton'
@@ -18,7 +32,19 @@ import {
   PaginationPrevious,
 } from '@/shared/ui/pagination'
 
-export type DataGridRowLink<T> =
+const dataGridFeatures = tableFeatures({
+  rowSortingFeature,
+  rowPaginationFeature,
+  columnSizingFeature,
+  columnResizingFeature,
+  columnVisibilityFeature,
+})
+
+type DataGridFeatures = typeof dataGridFeatures
+
+export type DataGridColumnDef<T extends RowData> = ColumnDef<DataGridFeatures, T>
+
+export type DataGridRowLink<T extends RowData> =
   | {
       kind: 'href'
       href: (row: T) => LinkOptions
@@ -28,8 +54,8 @@ export type DataGridRowLink<T> =
       onClick: (row: T) => void
     }
 
-export interface DataGridProps<T> {
-  columns: Array<ColumnDef<T>>
+export interface DataGridProps<T extends RowData> {
+  columns: Array<DataGridColumnDef<T>>
   rows: Array<T> | undefined
   totalCount: number | undefined
   isLoading?: boolean
@@ -46,12 +72,12 @@ export interface DataGridProps<T> {
 
 const DEFAULT_COLUMN_SIZE = 150
 
-const getColumnSize = <T,>(column: ColumnDef<T>): number => {
+const getColumnSize = <T extends RowData>(column: DataGridColumnDef<T>): number => {
   const size = column.size
   return typeof size === 'number' ? size : DEFAULT_COLUMN_SIZE
 }
 
-const getTableMinWidth = <T,>(columns: Array<ColumnDef<T>>): number => {
+const getTableMinWidth = <T extends RowData>(columns: Array<DataGridColumnDef<T>>): number => {
   return columns.reduce<number>((sum, column) => sum + getColumnSize(column), 0)
 }
 
@@ -97,7 +123,7 @@ function isInteractiveTarget(event: MouseEvent): boolean {
   return interactiveElement !== null && interactiveElement !== event.currentTarget
 }
 
-export function DataGrid<T>(props: DataGridProps<T>) {
+export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
   const {
     columns,
     rows = [],
@@ -148,10 +174,10 @@ export function DataGrid<T>(props: DataGridProps<T>) {
     [onPaginationChangeProp, pagination],
   )
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataGridFeatures,
     columns,
     data: rows,
-    getCoreRowModel: getCoreRowModel(),
     rowCount: totalCount,
     manualPagination: true,
     manualSorting: true,
@@ -268,7 +294,7 @@ export function DataGrid<T>(props: DataGridProps<T>) {
                           transform: getResizeTransform(
                             header.column.getIsResizing(),
                             table.options.columnResizeDirection,
-                            table.getState().columnSizingInfo.deltaOffset,
+                            table.state.columnResizing.deltaOffset,
                           ),
                         },
                       }}

@@ -24,10 +24,11 @@ function SuggestionsRoute() {
 }
 ```
 
-**Complex routes** (pagination, date ranges, API param mapping) — schema + mapper in `features/<domain>/model/`:
+**Complex routes** (pagination, date ranges, API param mapping) — schema + mapper
+in the owning page's `model/` segment:
 
 ```ts
-// features/legal/model/checked-contracts-search.ts
+// pages/checked-contracts/model/checked-contracts-search.ts
 export const checkedContractsSearchSchema = z.object({
   page: z
     .number()
@@ -155,8 +156,8 @@ const link = linkOptions({
 - Always `validateSearch` with Zod — never read raw `window.location.search`
 - Always `.catch()` on every field — no field should throw on invalid input
 - Use `Route.useSearch()`, not `useRouterState`
-- Read Route params/search only in route files; feature/widget entry points
+- Read Route params/search only in route files; page/widget entry points
   receive them through typed props
-- Schema lives in route file when simple, in `features/<domain>/model/` when it needs a mapper or is reused
+- Schema lives in route file when simple, in the owning page's `model/` when it needs a mapper or is reused
 - Mapper function (`map*SearchToParams`) converts search state to API params — keeps route component clean
 - Preserve existing params via spread in updater functions

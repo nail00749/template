@@ -2,9 +2,9 @@ import * as React from 'react'
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog'
 
 import { cn } from '@/shared/lib/utils'
-import { Button } from '@/shared/ui/button.tsx'
-import { Spinner } from '@/shared/ui/spinner.tsx'
-import { DialogTitle } from '@/shared/ui/dialog.tsx'
+import { Button } from '@/shared/ui/button'
+import { Spinner } from '@/shared/ui/spinner'
+import { DialogTitle } from '@/shared/ui/dialog'
 
 function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
   return (

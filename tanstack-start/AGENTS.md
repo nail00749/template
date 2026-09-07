@@ -36,20 +36,35 @@ Base UI, Bun, Nitro, Vite 8.
 | UI component or styling                | `.docs/ui.md`, `.docs/conventions.md`                        |
 | Git operation requested by the user    | `.docs/git.md`                                               |
 
+## Local skills
+
+Repository skills live in `../.agents/skills/`:
+
+- [shadcn](../.agents/skills/shadcn/SKILL.md): component APIs, composition,
+  registry operations and styling when working on shadcn UI.
+- [feature-sliced-design](../.agents/skills/feature-sliced-design/SKILL.md):
+  placement decisions, public APIs and FSD dependency boundaries.
+
+Use them only for the relevant task. This file and `.docs/*` define the project
+contracts when upstream examples differ. Run shadcn commands from this
+directory with Bun; inspect `components.json` and the existing wrappers first.
+Keep Base UI `render`, TanStack Form, DataGrid, the existing Sonner integration
+and documented FSD ownership. Installing or invoking a skill does not authorize
+a component-library or architecture migration.
+
 ## Architecture invariants
 
-- The project is FSD-inspired and domain-oriented; follow the exact layers in
+- The project uses FSD; follow the exact layers and public APIs in
   `.docs/architecture.md`, not assumptions from another FSD variant.
-- Dependency direction: `app/routes -> widgets -> features -> shared`.
-- `shared` never imports `features`, `widgets`, or `routes`.
-- Feature slices never import other feature slices. Compose domains in a widget
-  or route adapter instead.
-- External consumers import a feature/widget through its `index.ts`; direct
+- Dependency direction: `app + routes -> pages -> widgets -> features -> entities -> shared`.
+- Keep Start entries and `routes/` at their default paths under `src/`; treat them as App.
+- Lower layers never import higher layers; same-layer slices never import one another.
+- Compose user actions and entities in a page or widget.
+- External consumers import a page/widget/feature/entity through its `index.ts`; direct
   imports into another slice's internals are forbidden.
 - Routes are adapters only: guards, loaders, search/params validation, metadata,
-  and rendering a feature/widget entry point.
-- Keep non-trivial screen logic in a co-located `use<Feature>` hook. Do not add
-  proxy `<PageName>View` layers without real reuse or readability benefit.
+  and rendering a page/widget entry point. The root route owns the document shell.
+- Pages own screen orchestration; reusable actions belong in feature slices.
 - Reuse existing shared UI, forms, dialogs, hooks, and utilities before adding
   another abstraction.
 
@@ -61,7 +76,7 @@ Base UI, Bun, Nitro, Vite 8.
   never replaces backend authorization.
 - Use `linkOptions` for reusable/dynamic links; never interpolate route paths.
 - Use `createIsomorphicFn` or a `*.server.ts` module for server/client boundaries.
-- Read environment variables only through `@/env`.
+- Read environment variables only through `@/shared/config/env`.
 - Use Orval-generated API clients and `queryOptions`/`mutationOptions` wrappers.
 - Mutation errors have one owner: the global handler by default. A local custom
   toast must first disable the global toast via query/mutation metadata.
@@ -87,8 +102,10 @@ Base UI, Bun, Nitro, Vite 8.
 Never edit these by hand:
 
 - `src/routeTree.gen.ts`
-- `src/features/*/api/endpoints/**`
-- `src/features/*/api/model/**`
+- `src/shared/api/admin/endpoints/**`
+- `src/shared/api/admin/model/**`
+- `src/shared/api/auth/endpoints/**`
+- `src/shared/api/auth/model/**`
 
 Regenerate API files with `bun run generate-api`. Generated output is not a
 place for handwritten query wrappers, hooks, or business logic.

@@ -1,5 +1,11 @@
 # Auth
 
+Auth domain code lives in `entities/session`; its public API is
+`authKeys`, `meQueryOptions`, `AuthUnavailableError`, and
+`logoutMutationOptions`. Logout orchestration may be composed by the
+`features/logout` slice. The FSD migration changes ownership and import paths;
+it does not change authentication behavior or backend authorization.
+
 ## Security boundary
 
 Authentication uses an `httpOnly` cookie and Axios `withCredentials: true`.

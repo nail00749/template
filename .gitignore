@@ -210,3 +210,9 @@ dist
 .pnp.*
 
 /.idea/
+
+# macOS metadata
+.DS_Store
+
+# TanStack Start / Nitro build output
+.output/

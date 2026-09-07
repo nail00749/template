@@ -5,6 +5,11 @@
 Router создаётся в `src/router.tsx` через `getRouter()` — фабрика нужна для
 SSR (новый router на каждый запрос).
 
+Используем стандартные пути TanStack Start: `src/routes/`, `src/router.tsx`,
+`src/client.tsx`, `src/routeTree.gen.ts`. В `vite.config.ts` остаётся
+`tanstackStart({})`, без переопределений путей. `bun run dev` и `bun run build`
+автоматически обновляют дерево маршрутов.
+
 ```ts
 export const getRouter = () => {
   const rqContext = TanstackQuery.getContext()
@@ -53,7 +58,7 @@ module. Do not scatter `import.meta.env.SSR` branches through shared modules:
 ```ts
 export const Route = createFileRoute('/_admin/templates/$templateId')({
   loader: ({ params, context }) => {
-    return context.queryClient.ensureQueryData(adminQueries.templateDetail(params.templateId))
+    return context.queryClient.ensureQueryData(templateQueries.templateDetail(params.templateId))
   },
   head: ({ loaderData }) => ({
     meta: [{ title: `Шаблон ${loaderData?.name} — Admin Panel` }],
@@ -71,7 +76,7 @@ export const Route = createFileRoute('/_admin/templates/$templateId')({
 - Auth `beforeLoad` is a separate freshness-sensitive case; follow
   `.docs/auth.md` instead of copying the normal loader rule.
 - Route adapter may read loader data with `Route.useLoaderData()` and pass it to
-  the feature/widget through props. Feature code must not import a Route object.
+  the page/widget through props. Lower-layer code must not import a Route object.
 
 ```ts
 function TemplateDetailRoute() {
@@ -96,10 +101,10 @@ function TemplateDetailRoute() {
 ```ts
 // loader
 loader: ({ context }) =>
-  context.queryClient.ensureQueryData(adminQueries.templateDetail(id)),
+  context.queryClient.ensureQueryData(templateQueries.templateDetail(id)),
 
 // component
-const { data } = useQuery(adminQueries.templateDetail(id))
+const { data } = useQuery(templateQueries.templateDetail(id))
 ```
 
 Если ключи не совпадают — будет двойной запрос.
@@ -111,7 +116,7 @@ const { data } = useQuery(adminQueries.templateDetail(id))
 
 ## Environment Variables
 
-Доступ через `@/env` (`t3-env`). Схема в `src/env.ts`:
+Доступ через `@/shared/config/env` (`t3-env`). Схема в `src/shared/config/env.ts`:
 
 - `VITE_*` — клиентские.
 - `SERVER_*` — серверные (SSR).
@@ -128,5 +133,5 @@ router plugin regenerate the tree.
 
 - `getRouter()` creates a new router and QueryClient for every request.
 - Browser APIs must not run during SSR render/module initialization.
-- Server secrets stay behind `@/env` and a server-only boundary.
+- Server secrets stay behind `@/shared/config/env` and a server-only boundary.
 - Never set `rejectUnauthorized: false`; configure a trusted development CA.

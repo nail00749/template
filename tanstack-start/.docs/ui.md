@@ -5,8 +5,8 @@ Use components from `@/shared/ui`.
 ## Available Components
 
 Полный актуальный список смотри в `src/shared/ui/` — там лежат все примитивы.
-Перед созданием нового компонента проверь эту папку и `@/shared/form`,
-`@/shared/dialog`.
+Перед созданием нового компонента проверь эту папку и `@/shared/ui/form`,
+`@/shared/ui/dialog-provider`.
 
 Часто используемые:
 
@@ -23,7 +23,7 @@ Use components from `@/shared/ui`.
 
 Отсутствующий компонент не автоматически относится к `shared/ui`:
 
-- domain-specific или one-off компонент остаётся в `features/<domain>/ui`;
+- domain-specific или one-off компонент остаётся в owning page/feature `ui/`;
 - generic component сначала композируется из существующих primitives;
 - в `shared/ui` он переносится только при отсутствии business semantics и
   реальном повторном использовании.

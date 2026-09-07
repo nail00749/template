@@ -1,0 +1,40 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended"],
+  labels: ["dependencies"],
+  rangeStrategy: "replace",
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 4am on monday"],
+  },
+  packageRules: [
+    {
+      description: "Group non-major TanStack updates",
+      matchPackageNames: ["/^@tanstack\\//"],
+      matchUpdateTypes: ["minor", "patch"],
+      groupName: "TanStack packages",
+    },
+    {
+      description: "Group non-major build and test toolchain updates",
+      matchPackageNames: [
+        "vite",
+        "vitest",
+        "typescript",
+        "orval",
+        "oxfmt",
+        "oxlint",
+        "jsdom",
+        "/^@vitejs\\//",
+        "/^@testing-library\\//",
+        "/^@types\\//",
+      ],
+      matchUpdateTypes: ["minor", "patch"],
+      groupName: "build and test toolchain",
+    },
+    {
+      description: "Keep major upgrades isolated for migration review",
+      matchUpdateTypes: ["major"],
+      groupName: null,
+    },
+  ],
+}

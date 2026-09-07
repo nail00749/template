@@ -1,30 +1,39 @@
 # API
 
 Use Orval-generated endpoints only. Never write manual axios/fetch clients.
+Generated endpoint and model files live in `@/shared/api/admin/{endpoints,model}`
+and `@/shared/api/auth/{endpoints,model}`. The handwritten
+`@/shared/api/admin` and `@/shared/api/auth` modules are focused facades for
+those generated clients and types.
+
+Entity query contracts are exposed from `@/entities/session` and
+`@/entities/template`. The FSD move preserves existing query-key values; do
+not rename key segments while relocating code.
 
 ## Query Options Pattern
 
 ```ts
-// <entity>.queries.ts
+// entities/template/api/template.queries.ts
 import { queryOptions, mutationOptions } from '@tanstack/react-query'
-import { getLegal } from './endpoints/legal/legal'
-import { legalKeys } from './legal.keys'
+import { getAdmin } from '@/shared/api/admin'
+import type { ListTemplatesApiV1AdminTemplatesGetParams, TemplateUpdate } from '@/shared/api/admin'
+import { templateKeys } from './template.keys'
 
-const api = getLegal()
+const api = getAdmin()
 
-export const contractTypesQueryOptions = (params?: Params) =>
+export const templatesQueryOptions = (params?: ListTemplatesApiV1AdminTemplatesGetParams) =>
   queryOptions({
-    queryKey: legalKeys.contractTypes(params),
-    queryFn: () => api.listContractTypesApiLegalContractTypesGet(params),
+    queryKey: templateKeys.templateList(params),
+    queryFn: () => api.listTemplatesApiV1AdminTemplatesGet(params),
   })
 
-export const createContractTypeMutationOptions = () =>
+export const updateTemplateMutationOptions = () =>
   mutationOptions({
-    mutationFn: (payload: ContractTypeCreate) =>
-      api.createContractTypeApiLegalContractTypesPost(payload),
+    mutationFn: ({ templateId, data }: { templateId: string; data: TemplateUpdate }) =>
+      api.updateTemplateApiV1AdminTemplatesTemplateIdPut(templateId, data),
     onSuccess: (_result, _payload, _context, mutationContext) => {
       void mutationContext.client.invalidateQueries({
-        queryKey: legalKeys.contractTypesAll(),
+        queryKey: templateKeys.templatesAll(),
       })
     },
   })
@@ -40,12 +49,12 @@ export const createContractTypeMutationOptions = () =>
 Keys live in `<domain>.keys.ts` and use a factory pattern:
 
 ```ts
-// legal.keys.ts
-export const legalKeys = {
-  all: ['legal'] as const,
-  contractTypesAll: () => [...legalKeys.all, 'contract-types'] as const,
-  contractTypes: (params?: Params) => [...legalKeys.contractTypesAll(), params ?? {}] as const,
-  contractType: (id: string) => [...legalKeys.contractTypesAll(), 'detail', id] as const,
+// entities/template/api/template.keys.ts (list keys excerpt)
+export const templateKeys = {
+  all: ['admin'] as const,
+  templatesAll: () => [...templateKeys.all, 'templates'] as const,
+  templateList: (params?: ListTemplatesApiV1AdminTemplatesGetParams) =>
+    [...templateKeys.templatesAll(), 'list', params] as const,
 }
 ```
 
@@ -53,11 +62,12 @@ Rules:
 
 - Never inline query keys — always use the keys factory
 - Always invalidate via `*All()` parent key when mutation affects a list
-- One `*.keys.ts` file per domain feature
+- One `*.keys.ts` file per entity
 
 ## Retry and Error Handling
 
-Глобальные настройки — в `src/app/integrations/tanstack-query/root-provider.tsx`:
+Глобальные настройки QueryClient — в
+`src/app/integrations/tanstack-query/root-provider.tsx`:
 
 - **Queries** — `retry` по умолчанию пропускает 4xx (кроме 408, 425, 429) и
   повторяет 5xx/сетевые ошибки с учётом `Retry-After`.
@@ -119,9 +129,11 @@ to DataGrid.
 
 - Never duplicate API methods that Orval already generates
 - Always use `queryOptions` / `mutationOptions` wrappers — not raw `useQuery` options inline
-- Never manually type response shapes — import from generated `model.ts`
-- Orval regeneration: `bun run generate-api` — никогда не редактируй файлы в `api/endpoints/`
+- Never manually type response shapes — import types through `@/shared/api/admin`
+  or `@/shared/api/auth`
+- Orval regeneration: `OPENAPI_URL=... bun run generate-api` — никогда не
+  редактируй файлы в `shared/api/*/{endpoints,model}/`
 - Query/mutation options own API binding and cache consistency; navigation,
   dialogs, forms, and success feedback belong to the calling user flow
-- External consumers import query options through the feature's `index.ts`;
-  relative deep imports are allowed only inside the same feature slice
+- External consumers import query options through the entity's `index.ts`;
+  relative deep imports are allowed only inside the same slice

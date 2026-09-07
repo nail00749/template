@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { Agent } from 'node:https'
-import { env } from '@/env'
+import { env } from '@/shared/config/env'
 
 let httpsAgentPromise: Promise<Agent> | undefined
 

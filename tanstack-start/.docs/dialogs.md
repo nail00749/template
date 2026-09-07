@@ -1,11 +1,11 @@
 # Dialogs
 
-Import from `@/shared/dialog`.
+Import from `@/shared/ui/dialog-provider`.
 
 ## Opening a Dialog
 
 ```tsx
-import { useDialog } from '@/shared/dialog'
+import { useDialog } from '@/shared/ui/dialog-provider'
 import { MyDialog } from './MyDialog'
 
 const { open, close } = useDialog()
@@ -22,7 +22,7 @@ close('my-dialog-id')
 A dialog component receives `onClose` via `DialogProps<T>` and returns `DialogContent` only — never wraps itself in `Dialog`.
 
 ```tsx
-import type { DialogProps } from '@/shared/dialog'
+import type { DialogProps } from '@/shared/ui/dialog-provider'
 import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/shared/ui/dialog'
 
 export interface MyDialogProps {

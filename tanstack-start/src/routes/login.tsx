@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { LoginPage, meQueryOptions } from '@/features/auth'
+import { LoginPage } from '@/pages/login'
+import { meQueryOptions } from '@/entities/session'
 
 export const Route = createFileRoute('/login')({
   head: () => ({ meta: [{ title: 'Вход — Admin Panel' }] }),
