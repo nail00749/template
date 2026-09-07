@@ -87,7 +87,7 @@ describe('DataGrid', () => {
     expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 10 })
   })
 
-  it('keeps a stable minimum height with a single row', () => {
+  it('keeps the horizontal scroll area at the bottom with a single row', () => {
     render(
       <DataGrid
         columns={columns}
@@ -97,8 +97,12 @@ describe('DataGrid', () => {
       />,
     )
 
-    const container = screen.getByRole('table').closest('[aria-busy]')
+    const table = screen.getByRole('table')
+    const scrollArea = table.parentElement
+    const container = table.closest('[aria-busy]')
     expect(container?.classList.contains('min-h-[200px]')).toBe(true)
+    expect(container?.classList.contains('grid')).toBe(true)
+    expect(scrollArea?.parentElement).toBe(container)
   })
 
   it('does not show the empty state during initial loading', () => {

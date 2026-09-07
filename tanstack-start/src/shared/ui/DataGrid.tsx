@@ -215,7 +215,7 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
   return (
     <div className="w-full">
       <div
-        className="min-h-[200px] overflow-x-auto overflow-y-auto max-h-[600px] rounded-xl border border-gray-200 bg-card/95 text-card-foreground shadow-md"
+        className="grid min-h-[200px] overflow-x-auto overflow-y-auto max-h-[600px] rounded-xl border border-gray-200 bg-card/95 text-card-foreground shadow-md"
         aria-busy={Boolean(isLoading || isFetching)}
       >
         {isFetching && !showSkeleton && (
