@@ -10,6 +10,14 @@ Entity query contracts are exposed from `@/entities/session` and
 `@/entities/template`. The FSD move preserves existing query-key values; do
 not rename key segments while relocating code.
 
+## Generated-code formatting
+
+The Orval post-hook uses `.oxfmtrc.orval.json` with no `ignorePatterns` and
+the empty `.oxfmt-orval-ignore` file. Both are intentional: `--ignore-path`
+does not override exclusions defined in the formatter config. The ordinary
+`.oxfmtrc.json` continues to exclude generated endpoints/models from project
+formatting and `check`. Keep formatting options in both configs aligned.
+
 ## Query Options Pattern
 
 ```ts

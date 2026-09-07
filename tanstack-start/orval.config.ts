@@ -41,7 +41,7 @@ const apiOutput = (group: string): OutputOptions => ({
 
 const apiHooks = (group: string) => ({
   afterAllFilesWrite: [
-    `bunx oxfmt --write --ignore-path=.oxfmt-orval-ignore src/shared/api/${group}/`,
+    `bunx oxfmt --write --config=.oxfmtrc.orval.json --ignore-path=.oxfmt-orval-ignore src/shared/api/${group}/`,
     `bunx oxlint --fix src/shared/api/${group}/`,
   ],
 })
