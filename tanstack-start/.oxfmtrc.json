@@ -12,6 +12,7 @@
     "bun.lock",
     "src/routeTree.gen.ts",
     "src/shared/api/*/endpoints/",
-    "src/shared/api/*/model/"
+    "src/shared/api/*/model/",
+    ".agents/skills/"
   ]
 }

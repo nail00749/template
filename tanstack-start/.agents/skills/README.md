@@ -1,7 +1,6 @@
-# Repository skills
+# Frontend skills
 
-These skills are installed only in this repository and support the frontend in
-`tanstack-start/`. Upstream files are kept unchanged, including their references.
+These skills are scoped to `tanstack-start/`. Upstream files are kept unchanged, including their references.
 
 - **shadcn**: [shadcn-ui/ui](https://github.com/shadcn-ui/ui/tree/5c7072da672b0048bc6771e3204063a2537df91a/skills/shadcn).
 - **feature-sliced-design**: [feature-sliced/skills](https://github.com/feature-sliced/skills/tree/e7eac044ee7405b0e82abe8e54cab7a1e9e8bc0c/feature-sliced-design).
@@ -16,5 +15,5 @@ The frontend uses Bun, Base UI, TanStack Form and its existing Sonner integratio
 Run UI CLI commands inside `tanstack-start/`, where `components.json` lives.
 
 Codex discovers repository `.agents/skills` from the working directory and its
-ancestors. This root location covers tasks launched from the repository root
-and from `tanstack-start/`.
+ancestors. Launch frontend tasks from `tanstack-start/` (or a child directory)
+to discover these skills. They are not installed at the repository root.

@@ -38,11 +38,11 @@ Base UI, Bun, Nitro, Vite 8.
 
 ## Local skills
 
-Repository skills live in `../.agents/skills/`:
+Repository skills live in `.agents/skills/`:
 
-- [shadcn](../.agents/skills/shadcn/SKILL.md): component APIs, composition,
+- [shadcn](.agents/skills/shadcn/SKILL.md): component APIs, composition,
   registry operations and styling when working on shadcn UI.
-- [feature-sliced-design](../.agents/skills/feature-sliced-design/SKILL.md):
+- [feature-sliced-design](.agents/skills/feature-sliced-design/SKILL.md):
   placement decisions, public APIs and FSD dependency boundaries.
 
 Use them only for the relevant task. This file and `.docs/*` define the project
