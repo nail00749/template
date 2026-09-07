@@ -87,6 +87,20 @@ describe('DataGrid', () => {
     expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 10 })
   })
 
+  it('keeps a stable minimum height with a single row', () => {
+    render(
+      <DataGrid
+        columns={columns}
+        rows={[rows[0]]}
+        totalCount={1}
+        hidePagination={true}
+      />,
+    )
+
+    const container = screen.getByRole('table').closest('[aria-busy]')
+    expect(container?.classList.contains('min-h-[200px]')).toBe(true)
+  })
+
   it('does not show the empty state during initial loading', () => {
     const { rerender } = render(
       <DataGrid
@@ -110,7 +124,9 @@ describe('DataGrid', () => {
       />,
     )
 
-    expect(screen.getByText('Нет данных для отображения')).not.toBeNull()
+    const emptyState = screen.getByText('Нет данных для отображения')
+    expect(emptyState).not.toBeNull()
+    expect(emptyState.closest('td')?.classList.contains('h-40')).toBe(true)
   })
 
   it('keeps nested actions separate from the row callback', () => {
