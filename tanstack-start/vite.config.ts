@@ -30,7 +30,7 @@ const config = defineConfig({
   },
   plugins: [
     devtools(),
-    nitro({ preset: 'bun' }),
+    nitro({ preset: process.env.NITRO_PRESET ?? 'bun' }),
     tailwindcss(),
     tanstackStart({}),
     viteReact(),
