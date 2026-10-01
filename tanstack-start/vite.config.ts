@@ -5,6 +5,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import { nitro } from 'nitro/vite'
+import { intlayer } from 'vite-intlayer'
 import { defineConfig, type PluginOption } from 'vite'
 
 const reactCompilerBabel = (await babel({
@@ -32,6 +33,7 @@ const config = defineConfig({
     devtools(),
     nitro({ preset: process.env.NITRO_PRESET ?? 'bun' }),
     tailwindcss(),
+    intlayer(),
     tanstackStart({}),
     viteReact(),
     reactCompilerBabel,

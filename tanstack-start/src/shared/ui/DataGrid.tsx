@@ -11,6 +11,7 @@ import {
 } from '@tanstack/react-table'
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 import { useCallback, useState } from 'react'
+import { useIntlayer } from 'react-intlayer'
 import type { LinkOptions } from '@tanstack/react-router'
 import type { MouseEvent, ReactNode } from 'react'
 import type {
@@ -124,13 +125,14 @@ function isInteractiveTarget(event: MouseEvent): boolean {
 }
 
 export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
+  const content = useIntlayer('shared-ui-data-grid')
   const {
     columns,
     rows = [],
     totalCount = 0,
     isLoading,
     isFetching,
-    emptyContent = 'Нет данных для отображения',
+    emptyContent: emptyContentProp,
     pagination: paginationProp,
     onPaginationChange: onPaginationChangeProp,
     sorting: sortingProp,
@@ -139,6 +141,7 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
     hidePagination = false,
     rowLink,
   } = props
+  const emptyContent = emptyContentProp ?? content.noData.value
 
   const navigate = useNavigate()
 
@@ -204,11 +207,14 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
   const pageStart = totalCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1
   const pageEnd =
     totalCount === 0 ? 0 : Math.min(pageStart + table.getRowModel().rows.length - 1, totalCount)
-  let dataSummary = `Показано ${pageStart}-${pageEnd} из ${totalCount}`
+  let dataSummary = content.summary.value
+    .replace('{{start}}', String(pageStart))
+    .replace('{{end}}', String(pageEnd))
+    .replace('{{total}}', String(totalCount))
   if (showSkeleton) {
-    dataSummary = 'Загрузка данных...'
+    dataSummary = content.loading.value
   } else if (totalCount === 0) {
-    dataSummary = 'Нет данных для отображения'
+    dataSummary = content.noData.value
   }
 
   return (
@@ -222,7 +228,7 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
             className="sr-only"
             role="status"
           >
-            Обновление данных...
+            {content.updating}
           </span>
         )}
         <Table
@@ -351,14 +357,14 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
                           {isFirstCell && linkProps && (
                             <Link
                               {...linkProps}
-                              aria-label="Открыть"
+                              aria-label={content.open.value}
                               className="absolute inset-0 z-0 rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
                             />
                           )}
                           {isFirstCell && rowLink?.kind === 'callback' && (
                             <button
                               type="button"
-                              aria-label="Открыть"
+                              aria-label={content.open.value}
                               className="absolute inset-0 z-0 rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
                               onClick={() => rowLink.onClick(row.original)}
                             />
@@ -403,7 +409,7 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
                 <PaginationItem>
                   <PaginationPrevious
                     href="#"
-                    text="Назад"
+                    text={content.previous.value}
                     aria-disabled={!table.getCanPreviousPage()}
                     className={!table.getCanPreviousPage() ? 'pointer-events-none opacity-50' : ''}
                     onClick={(event) => {
@@ -432,7 +438,7 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
                 <PaginationItem>
                   <PaginationNext
                     href="#"
-                    text="Вперед"
+                    text={content.next.value}
                     aria-disabled={!table.getCanNextPage()}
                     className={!table.getCanNextPage() ? 'pointer-events-none opacity-50' : ''}
                     onClick={(event) => {

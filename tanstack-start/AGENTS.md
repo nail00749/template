@@ -29,6 +29,7 @@ Base UI, Bun, Nitro, Vite 8.
 | Route, loader, redirect, search params | `.docs/router.md`, `.docs/start.md`                          |
 | Query, mutation, generated endpoint    | `.docs/api.md`, `.docs/error-handling.md`                    |
 | Authentication/session                 | `.docs/auth.md`, `.docs/error-handling.md`, `.docs/start.md` |
+| User-facing text, localization         | `.docs/i18n.md`                                              |
 | Form                                   | `.docs/forms.md`, `.docs/ui.md`, `.docs/error-handling.md`   |
 | Dialog                                 | `.docs/dialogs.md`, `.docs/ui.md`                            |
 | Table/list                             | `.docs/datagrid.md`, `.docs/router.md`, `.docs/api.md`       |

@@ -1,10 +1,12 @@
 import { AlertCircleIcon } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import type { ErrorComponentProps } from '@tanstack/react-router'
+import { useIntlayer } from 'react-intlayer'
 import { AuthUnavailableError } from '@/entities/session'
 import { Button } from '@/shared/ui/button'
 import { PageState } from '@/shared/ui/page-state'
 import { getMessageFromError } from '@/shared/lib/utils'
+import { useAppLocale } from '@/shared/lib/i18n'
 import { AuthError } from './AuthError'
 
 function isAuthError(error: unknown): boolean {
@@ -21,12 +23,14 @@ interface UnknownErrorFallbackProps {
 }
 
 function UnknownErrorFallback({ error, reset }: UnknownErrorFallbackProps) {
-  const message = getMessageFromError(error, 'Неизвестная ошибка')
+  const { locale } = useAppLocale()
+  const content = useIntlayer('root-error-boundary')
+  const message = getMessageFromError(error, content.unknown.value, locale)
 
   return (
     <PageState
       icon={AlertCircleIcon}
-      title="Что-то пошло не так"
+      title={content.genericTitle.value}
       description={message}
       tone="destructive"
       actions={
@@ -35,7 +39,7 @@ function UnknownErrorFallback({ error, reset }: UnknownErrorFallbackProps) {
             type="button"
             onClick={reset}
           >
-            Повторить
+            {content.retry}
           </Button>
         </div>
       }

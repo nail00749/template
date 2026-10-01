@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useIntlayer } from 'react-intlayer'
 import { AlertTriangleIcon, CircleHelpIcon } from 'lucide-react'
 import type { DialogProps } from './useDialog'
 import { cn } from '@/shared/lib/utils'
@@ -24,13 +25,16 @@ export interface ConfirmDialogProps {
 export function ConfirmDialog({
   title,
   description,
-  confirmLabel = 'Подтвердить',
-  cancelLabel = 'Отмена',
+  confirmLabel: confirmLabelProp,
+  cancelLabel: cancelLabelProp,
   confirmVariant = 'destructive',
   onConfirm,
   onCancel,
   onClose,
 }: DialogProps<ConfirmDialogProps>) {
+  const content = useIntlayer('shared-ui-dialog')
+  const confirmLabel = confirmLabelProp ?? content.confirm.value
+  const cancelLabel = cancelLabelProp ?? content.cancel.value
   const [isPending, setIsPending] = useState(false)
   const isDestructive = confirmVariant === 'destructive'
   const ConfirmIcon = isDestructive ? AlertTriangleIcon : CircleHelpIcon

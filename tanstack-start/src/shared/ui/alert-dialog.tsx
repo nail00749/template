@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog'
+import { useIntlayer } from 'react-intlayer'
 
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
@@ -65,6 +66,7 @@ function AlertDialogContent({
   showCloseButton?: boolean
   loading?: boolean
 }) {
+  const content = useIntlayer('shared-ui-dialog')
   const AlertClose = (
     <AlertDialogPrimitive.Close
       render={
@@ -74,7 +76,7 @@ function AlertDialogContent({
         />
       }
     >
-      <span className="sr-only">Close</span>
+      <span className="sr-only">{content.close}</span>
     </AlertDialogPrimitive.Close>
   )
 

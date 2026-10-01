@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { SlidePreview } from '@/entities/template'
-import { getChangesStatusLabel, getSlideLabel } from './slideZonesPresentation'
+import { useIntlayer } from 'react-intlayer'
 import { ZoneCard } from './zone-annotation/ZoneCard'
 import { ZoneOverlay } from './zone-annotation/ZoneOverlay'
 import type { DialogProps } from '@/shared/ui/dialog-provider'
@@ -10,6 +10,7 @@ import type { FieldType, TemplateSlideResponse, ZoneResponse } from '@/shared/ap
 import { templateKeys } from '@/entities/template'
 import { templateMutations, templateQueries } from '@/entities/template'
 import { cn, getMessageFromError } from '@/shared/lib/utils'
+import { useAppLocale } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import {
   DialogContent,
@@ -62,6 +63,9 @@ export function SlideZonesDialog({
   slide,
   onClose,
 }: DialogProps<SlideZonesDialogProps>) {
+  const { locale } = useAppLocale()
+  const content = useIntlayer('annotate-slide')
+  const slideLabel = `${content.slide.value} ${slide.slide_number + 1}`
   const queryClient = useQueryClient()
 
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null)
@@ -101,7 +105,7 @@ export function SlideZonesDialog({
       void queryClient.invalidateQueries({
         queryKey: templateKeys.templateZones(templateId),
       })
-      toast.success('Аннотации сохранены')
+      toast.success(content.saved.value)
       onClose()
     },
     onError: () => {
@@ -134,14 +138,14 @@ export function SlideZonesDialog({
     if (error) {
       return (
         <div className="flex h-64 items-center justify-center text-destructive">
-          Ошибка загрузки: {getMessageFromError(error)}
+          {content.loadError} {getMessageFromError(error, undefined, locale)}
         </div>
       )
     }
     if (slideZones.length === 0) {
       return (
         <div className="flex h-64 items-center justify-center text-muted-foreground">
-          Зоны не найдены
+          {content.noZones}
         </div>
       )
     }
@@ -169,11 +173,8 @@ export function SlideZonesDialog({
       <div className="flex flex-col gap-0">
         <div className="px-6 pt-6 pb-4">
           <DialogHeader>
-            <DialogTitle>Разметка зон шаблона</DialogTitle>
-            <DialogDescription>
-              Настройте типы полей для автоматического заполнения. Зоны показаны для всех слайдов
-              шаблона.
-            </DialogDescription>
+            <DialogTitle>{content.title}</DialogTitle>
+            <DialogDescription>{content.description}</DialogDescription>
           </DialogHeader>
         </div>
 
@@ -182,7 +183,7 @@ export function SlideZonesDialog({
             {slide.preview_url && (
               <SlidePreview
                 imageUrl={slide.preview_url}
-                alt={getSlideLabel(slide.slide_number)}
+                alt={slideLabel}
                 className="rounded-lg border bg-muted"
               >
                 <ZoneOverlay
@@ -192,9 +193,7 @@ export function SlideZonesDialog({
                 />
               </SlidePreview>
             )}
-            <p className="text-center text-sm text-muted-foreground">
-              {getSlideLabel(slide.slide_number)}
-            </p>
+            <p className="text-center text-sm text-muted-foreground">{slideLabel}</p>
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col">{renderZones()}</div>
@@ -202,21 +201,21 @@ export function SlideZonesDialog({
 
         <div className="flex items-center justify-between gap-4 border-t px-6 py-4">
           <span className={cn('text-sm', hasChanges ? 'text-foreground' : 'text-muted-foreground')}>
-            {getChangesStatusLabel(hasChanges)}
+            {hasChanges ? content.unsavedChanges : content.noChanges}
           </span>
           <DialogFooter className="gap-2 sm:justify-end">
             <Button
               variant="outline"
               onClick={onClose}
             >
-              Отмена
+              {content.cancel}
             </Button>
             <Button
               onClick={handleSave}
               loading={mutation.isPending}
               disabled={!hasChanges}
             >
-              Сохранить
+              {content.save}
             </Button>
           </DialogFooter>
         </div>

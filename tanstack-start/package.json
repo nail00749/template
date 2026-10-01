@@ -9,9 +9,11 @@
     "test": "vitest run --passWithNoTests",
     "lint": "oxlint",
     "format": "oxfmt .",
-    "check": "oxfmt --check . && oxlint && bun run check:architecture",
+    "check": "oxfmt --check . && oxlint && bun run check:architecture && bun run i18n:check",
     "fix": "oxfmt --write . && oxlint --fix",
-    "typecheck": "tsc --noEmit",
+    "i18n:build": "intlayer build",
+    "i18n:check": "bun run i18n:build && intlayer test",
+    "typecheck": "bun run i18n:build && tsc --noEmit",
     "generate-api": "bunx orval",
     "check:architecture": "bun scripts/check-architecture.ts"
   },
@@ -34,12 +36,14 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
+    "intlayer": "^9.6.0",
     "lucide-react": "^1.22.0",
     "next-themes": "^0.4.6",
     "nitro": "^3.0.260610-beta",
     "react": "^19.2.7",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.7",
+    "react-intlayer": "^9.6.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.2",
@@ -70,7 +74,11 @@
     "shadcn": "^4.12.0",
     "typescript": "^6.0.3",
     "vite": "^8.1.2",
+    "vite-intlayer": "^9.6.0",
     "vitest": "^4.1.9"
+  },
+  "overrides": {
+    "js-yaml": "4.3.2"
   },
   "packageManager": "bun@1.4.0"
 }

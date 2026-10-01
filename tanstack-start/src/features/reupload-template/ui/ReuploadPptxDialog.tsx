@@ -1,4 +1,5 @@
 import type { DialogProps } from '@/shared/ui/dialog-provider'
+import { useIntlayer } from 'react-intlayer'
 import { useReuploadPptxForm } from '../model/useReuploadPptxForm'
 import { Button } from '@/shared/ui/button'
 import {
@@ -19,6 +20,7 @@ export function ReuploadPptxDialog({
   templateName,
   onClose,
 }: DialogProps<ReuploadPptxDialogProps>) {
+  const content = useIntlayer('reupload-template')
   const { form, isPending } = useReuploadPptxForm({ templateId, onClose })
 
   return (
@@ -27,9 +29,11 @@ export function ReuploadPptxDialog({
       loading={isPending}
     >
       <DialogHeader>
-        <DialogTitle>Перезагрузить PPTX</DialogTitle>
+        <DialogTitle>{content.title}</DialogTitle>
         <DialogDescription>
-          Замените файл шаблона "{templateName}". Новый файл PPTX заменит существующие слайды.
+          {content.descriptionBeforeName}
+          {templateName}
+          {content.descriptionAfterName}
         </DialogDescription>
       </DialogHeader>
 
@@ -43,14 +47,14 @@ export function ReuploadPptxDialog({
         <form.AppField name="file">
           {(field) => (
             <field.FileFieldForm
-              label="Файл шаблона"
+              label={content.file.value}
               accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation"
               allowedExtensions={['.pptx']}
               allowedMimeTypes={[
                 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
               ]}
-              invalidFileMessage="Поддерживаются только файлы с расширением .pptx"
-              description="Файл презентации в формате PPTX."
+              invalidFileMessage={content.pptxExtension.value}
+              description={content.fileDescription.value}
             />
           )}
         </form.AppField>
@@ -62,10 +66,10 @@ export function ReuploadPptxDialog({
             onClick={onClose}
             disabled={isPending}
           >
-            Отмена
+            {content.cancel}
           </Button>
           <form.AppForm>
-            <form.SubmitButton>Обновить</form.SubmitButton>
+            <form.SubmitButton>{content.update}</form.SubmitButton>
           </form.AppForm>
         </DialogFooter>
       </form>

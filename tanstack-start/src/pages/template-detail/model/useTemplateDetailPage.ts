@@ -1,5 +1,6 @@
 import type { MouseEvent } from 'react'
 import { useSuspenseQuery } from '@tanstack/react-query'
+import { useIntlayer } from 'react-intlayer'
 import { templateQueries } from '@/entities/template'
 import type { TemplateSlideResponse } from '@/shared/api/admin'
 import { useDeleteSlide } from '@/features/delete-slide'
@@ -10,6 +11,7 @@ import { useDialog } from '@/shared/ui/dialog-provider'
 import { ConfirmDialog } from '@/shared/ui/dialog-provider/ConfirmDialog'
 
 export function useTemplateDetailPage(templateId: string) {
+  const content = useIntlayer('template-detail-page')
   const { data: template } = useSuspenseQuery(templateQueries.templateDetail(templateId))
   const dialog = useDialog()
   const deleteSlideMutation = useDeleteSlide({ templateId })
@@ -40,9 +42,9 @@ export function useTemplateDetailPage(templateId: string) {
 
   const handleDelete = (slide: TemplateSlideResponse) => {
     dialog.open(ConfirmDialog, `delete-slide-${slide.slide_number}`, {
-      title: 'Удалить слайд',
-      description: `Вы уверены, что хотите удалить слайд ${slide.slide_number}?`,
-      confirmLabel: 'Удалить',
+      title: content.deleteSlide.value,
+      description: `${content.deleteSlidePrompt.value} ${slide.slide_number}?`,
+      confirmLabel: content.delete.value,
       onConfirm: async () => {
         await deleteSlideMutation.mutateAsync({
           templateId,

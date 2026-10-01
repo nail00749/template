@@ -8,6 +8,17 @@ vi.mock('@/shared/config/env', () => ({
   },
 }))
 
+vi.mock('react-intlayer', () => ({
+  useIntlayer: () => ({
+    title: 'Вход в систему',
+    corporateLogin: 'Войти через корпоративный аккаунт',
+  }),
+}))
+
+vi.mock('@/features/change-locale', () => ({
+  LocaleSwitcher: () => null,
+}))
+
 afterEach(cleanup)
 
 describe('LoginPage', () => {

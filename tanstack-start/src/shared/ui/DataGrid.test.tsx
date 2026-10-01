@@ -83,7 +83,7 @@ describe('DataGrid', () => {
     )
 
     expect(screen.getByText('1 / 3')).not.toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Go to next page' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Перейти на следующую страницу' }))
 
     expect(onPaginationChange).toHaveBeenCalledOnce()
     const updater = onPaginationChange.mock.calls[0]?.[0]

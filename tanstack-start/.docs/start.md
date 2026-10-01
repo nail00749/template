@@ -11,11 +11,12 @@ SSR (новый router на каждый запрос).
 автоматически обновляют дерево маршрутов.
 
 ```ts
-export const getRouter = () => {
-  const rqContext = TanstackQuery.getContext()
+export const getRouter = async () => {
+  const locale = await getRequestLocale()
+  const rqContext = TanstackQuery.getContext(locale)
   const router = createRouter({
     routeTree,
-    context: { ...rqContext },
+    context: { ...rqContext, locale },
     defaultPreload: 'intent',
   })
   setupRouterSsrQueryIntegration({ router, queryClient: rqContext.queryClient })
@@ -135,3 +136,6 @@ router plugin regenerate the tree.
 - Browser APIs must not run during SSR render/module initialization.
 - Server secrets stay behind `@/shared/config/env` and a server-only boundary.
 - Never set `rejectUnauthorized: false`; configure a trusted development CA.
+
+Locale bootstrap and hydration are described in `.docs/i18n.md`; keep custom
+locale dehydrate/hydrate callbacks when changing the SSR Query integration.

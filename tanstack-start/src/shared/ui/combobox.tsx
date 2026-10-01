@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
+import { useIntlayer } from 'react-intlayer'
 
 import { CheckIcon, ChevronDownIcon, XIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
@@ -47,9 +48,11 @@ function ComboboxSelectTrigger({ className, children, ...props }: ComboboxPrimit
 function ComboboxTrigger({
   className,
   children,
-  'aria-label': ariaLabel = 'Открыть список',
+  'aria-label': ariaLabelProp,
   ...props
 }: ComboboxPrimitive.Trigger.Props) {
+  const content = useIntlayer('shared-ui-combobox')
+  const ariaLabel = ariaLabelProp ?? content.openList.value
   return (
     <ComboboxPrimitive.Trigger
       data-slot="combobox-trigger"
@@ -66,9 +69,11 @@ function ComboboxTrigger({
 
 function ComboboxClear({
   className,
-  'aria-label': ariaLabel = 'Очистить значение',
+  'aria-label': ariaLabelProp,
   ...props
 }: ComboboxPrimitive.Clear.Props) {
+  const content = useIntlayer('shared-ui-combobox')
+  const ariaLabel = ariaLabelProp ?? content.clearValue.value
   return (
     <ComboboxPrimitive.Clear
       data-slot="combobox-clear"

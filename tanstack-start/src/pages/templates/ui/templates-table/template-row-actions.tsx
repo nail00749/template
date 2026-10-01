@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { MoreHorizontalIcon } from 'lucide-react'
+import { useIntlayer } from 'react-intlayer'
 import type { TemplateListItemResponse } from '@/shared/api/admin'
 import { Button } from '@/shared/ui/button'
 import {
@@ -16,6 +17,7 @@ export interface TemplateRowActionsProps {
 }
 
 export function TemplateRowActions({ template, onEdit, onDelete }: TemplateRowActionsProps) {
+  const content = useIntlayer('templates-page')
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -23,6 +25,7 @@ export function TemplateRowActions({ template, onEdit, onDelete }: TemplateRowAc
           <Button
             variant="ghost"
             size="icon"
+            aria-label={content.actions.value}
           >
             <MoreHorizontalIcon className="size-4" />
           </Button>
@@ -35,15 +38,15 @@ export function TemplateRowActions({ template, onEdit, onDelete }: TemplateRowAc
             params={{ templateId: template.id }}
             className={'w-full'}
           >
-            Открыть
+            {content.open}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onEdit(template)}>Редактировать</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(template)}>{content.edit}</DropdownMenuItem>
         <DropdownMenuItem
           variant="destructive"
           onClick={() => onDelete(template)}
         >
-          Удалить
+          {content.delete}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

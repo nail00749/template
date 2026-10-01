@@ -1,9 +1,12 @@
 import { ShieldCheckIcon } from 'lucide-react'
+import { useIntlayer } from 'react-intlayer'
+import { LocaleSwitcher } from '@/features/change-locale'
 import { env } from '@/shared/config/env'
 import { Button } from '@/shared/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 
 export function LoginPage() {
+  const content = useIntlayer('login-page')
   const loginUrl = new URL('/api/v1/auth/login', env.VITE_API_BASE_URL).href
 
   return (
@@ -13,7 +16,7 @@ export function LoginPage() {
           <CardTitle className="text-xl">
             <div className="flex items-center justify-center gap-2">
               <ShieldCheckIcon className="h-6 w-6" />
-              Вход в систему
+              {content.title}
             </div>
           </CardTitle>
         </CardHeader>
@@ -23,8 +26,11 @@ export function LoginPage() {
             nativeButton={false}
             className="w-full"
           >
-            Войти через корпоративный аккаунт
+            {content.corporateLogin}
           </Button>
+          <div className="mt-4 flex justify-center">
+            <LocaleSwitcher />
+          </div>
         </CardContent>
       </Card>
     </div>

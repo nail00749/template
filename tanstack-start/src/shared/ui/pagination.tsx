@@ -1,14 +1,16 @@
 import * as React from 'react'
+import { useIntlayer } from 'react-intlayer'
 
 import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
+  const content = useIntlayer('shared-ui-pagination')
   return (
     <nav
       role="navigation"
-      aria-label="pagination"
+      aria-label={props['aria-label'] ?? content.pagination.value}
       data-slot="pagination"
       className={cn('mx-auto flex w-full justify-center', className)}
       {...props}
@@ -61,12 +63,14 @@ function PaginationLink({ className, isActive, size = 'icon', ...props }: Pagina
 
 function PaginationPrevious({
   className,
-  text = 'Previous',
+  text: textProp,
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  const content = useIntlayer('shared-ui-pagination')
+  const text = textProp ?? content.previous.value
   return (
     <PaginationLink
-      aria-label="Go to previous page"
+      aria-label={props['aria-label'] ?? content.previousPage.value}
       size="default"
       className={cn('pl-2!', className)}
       {...props}
@@ -80,12 +84,14 @@ function PaginationPrevious({
 
 function PaginationNext({
   className,
-  text = 'Next',
+  text: textProp,
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  const content = useIntlayer('shared-ui-pagination')
+  const text = textProp ?? content.next.value
   return (
     <PaginationLink
-      aria-label="Go to next page"
+      aria-label={props['aria-label'] ?? content.nextPage.value}
       size="default"
       className={cn('pr-2!', className)}
       {...props}
@@ -98,6 +104,7 @@ function PaginationNext({
 }
 
 function PaginationEllipsis({ className, ...props }: React.ComponentProps<'span'>) {
+  const content = useIntlayer('shared-ui-pagination')
   return (
     <span
       aria-hidden
@@ -110,7 +117,7 @@ function PaginationEllipsis({ className, ...props }: React.ComponentProps<'span'
     >
       <MoreHorizontalIcon />
 
-      <span className="sr-only">More pages</span>
+      <span className="sr-only">{content.morePages}</span>
     </span>
   )
 }

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useEffect, useLayoutEffect } from 'react'
+import { useIntlayer } from 'react-intlayer'
 import { useDialogLoadingContext } from './dialog-provider/DialogLoadingContext'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 
@@ -67,6 +68,7 @@ function DialogContent({
   showCloseButton?: boolean
   loading?: boolean
 }) {
+  const content = useIntlayer('shared-ui-dialog')
   const loadingContext = useDialogLoadingContext()
   useLayoutEffect(() => {
     loadingContext?.setLoading(loading)
@@ -104,7 +106,7 @@ function DialogContent({
           >
             <XIcon />
 
-            <span className="sr-only">Закрыть</span>
+            <span className="sr-only">{content.close}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>
@@ -130,6 +132,7 @@ function DialogFooter({
 }: React.ComponentProps<'div'> & {
   showCloseButton?: boolean
 }) {
+  const content = useIntlayer('shared-ui-dialog')
   return (
     <div
       data-slot="dialog-footer"
@@ -139,7 +142,9 @@ function DialogFooter({
       {children}
 
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button variant="outline" />}>Close</DialogPrimitive.Close>
+        <DialogPrimitive.Close render={<Button variant="outline" />}>
+          {content.close}
+        </DialogPrimitive.Close>
       )}
     </div>
   )

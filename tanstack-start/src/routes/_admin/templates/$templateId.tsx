@@ -6,15 +6,7 @@ export const Route = createFileRoute('/_admin/templates/$templateId')({
   loader: ({ params, context }) => {
     return context.queryClient.ensureQueryData(templateQueries.templateDetail(params.templateId))
   },
-  head: ({ loaderData }) => {
-    return {
-      meta: [
-        {
-          title: `Шаблон ${loaderData?.name} — Admin Panel`,
-        },
-      ],
-    }
-  },
+  staticData: { titleKey: 'template' },
   component: TemplateDetailPageComponent,
 })
 

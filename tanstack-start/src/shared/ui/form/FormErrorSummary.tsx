@@ -1,4 +1,5 @@
 import { CircleAlertIcon } from 'lucide-react'
+import { useIntlayer } from 'react-intlayer'
 import { Button } from '@/shared/ui/button'
 import { cn } from '@/shared/lib/utils'
 import { useFormContext } from './form-context'
@@ -40,10 +41,12 @@ function focusField(fieldName: string) {
 }
 
 export function FormErrorSummary({
-  title = 'Исправьте ошибки в форме',
+  title: titleProp,
   className,
   getFieldLabel = (fieldName) => fieldName,
 }: FormErrorSummaryProps) {
+  const content = useIntlayer('shared-ui-form-error-summary')
+  const title = titleProp ?? content.title.value
   const form = useFormContext()
 
   return (

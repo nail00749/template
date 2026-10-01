@@ -1,3 +1,5 @@
+import { getIntlayer } from 'intlayer'
+import { getBrowserLocale, type AppLocale } from './i18n/locale'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { isAxiosError } from 'axios'
@@ -18,7 +20,11 @@ export function formatFileSize(sizeInBytes: number): string {
   return `${parseFloat((sizeInBytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
 }
 
-export function getMessageFromError(error: unknown, defaultMessage = 'Неизвестная ошибка'): string {
+export function getMessageFromError(
+  error: unknown,
+  defaultMessage?: string,
+  locale: AppLocale = getBrowserLocale(),
+): string {
   if (isAxiosError(error)) {
     const data = error.response?.data
 
@@ -46,7 +52,7 @@ export function getMessageFromError(error: unknown, defaultMessage = 'Неизв
         if (isDetailsObject) {
           const code = (details as { code?: unknown }).code
           if (typeof code === 'string') {
-            return formatFileValidationError(code, message, details)
+            return formatFileValidationError(code, message, details, locale)
           }
         }
 
@@ -59,13 +65,14 @@ export function getMessageFromError(error: unknown, defaultMessage = 'Неизв
     return error.message
   }
 
-  return defaultMessage
+  return defaultMessage ?? getIntlayer('shared-errors', locale).unknown
 }
 
 function formatFileValidationError(
   code: string,
   fallbackMessage: string,
   details: { filename?: unknown; file_role?: unknown },
+  locale: AppLocale,
 ): string {
   const knownCodes = new Set([
     'empty_file',
@@ -86,7 +93,7 @@ function formatFileValidationError(
     return fallbackMessage
   }
 
-  const localized = getFileValidationErrorMessage(code, fallbackMessage)
+  const localized = getFileValidationErrorMessage(code, fallbackMessage, locale)
 
   const filename = typeof details.filename === 'string' ? details.filename : null
   if (filename) {

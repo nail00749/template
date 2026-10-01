@@ -1,5 +1,6 @@
 import { toast } from 'sonner'
 import { useRef } from 'react'
+import { useIntlayer } from 'react-intlayer'
 import type { ChangeEvent, MouseEvent } from 'react'
 import { XIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
@@ -39,6 +40,7 @@ export function FileFieldForm({
   allowedMimeTypes,
   invalidFileMessage,
 }: FileFieldFormProps) {
+  const content = useIntlayer('shared-ui-file-field')
   const field = useFieldContext<File | null>()
   const inputRef = useRef<HTMLInputElement>(null)
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
@@ -61,7 +63,7 @@ export function FileFieldForm({
         allowedMimeTypes.some((allowedMime) => allowedMime.trim().toLowerCase() === mime)
 
       if (!extensionOk || !mimeOk) {
-        toast.error(invalidFileMessage ?? 'Выбран файл недопустимого формата')
+        toast.error(invalidFileMessage ?? content.invalid.value)
         e.target.value = ''
         field.handleChange(null)
         return
@@ -90,7 +92,7 @@ export function FileFieldForm({
 
       <div className="flex min-w-0 items-center gap-3">
         <label className="has-[:focus-visible]:border-ring has-[:focus-visible]:ring-ring/50 hover:bg-accent hover:text-accent-foreground relative shrink-0 cursor-pointer overflow-hidden rounded-md border border-dashed border-input bg-background px-4 py-2 text-sm transition-[color,box-shadow] has-[:focus-visible]:ring-[3px]">
-          <span>Выбрать файл</span>
+          <span>{content.choose}</span>
 
           <Input
             ref={inputRef}
@@ -98,7 +100,7 @@ export function FileFieldForm({
             name={field.name}
             type="file"
             accept={accept}
-            aria-label={label ?? 'Выбрать файл'}
+            aria-label={label ?? content.choose.value}
             aria-invalid={isInvalid}
             className="absolute inset-0 h-full cursor-pointer opacity-0"
             onClick={handleClick}
@@ -108,7 +110,7 @@ export function FileFieldForm({
         </label>
 
         <span className="text-muted-foreground min-w-0 truncate text-sm">
-          {field.state.value?.name ?? 'Файл не выбран'}
+          {field.state.value?.name ?? content.none}
         </span>
 
         {field.state.value && (
@@ -116,7 +118,7 @@ export function FileFieldForm({
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={`Удалить файл ${field.state.value.name}`}
+            aria-label={content.remove.value.replace('{{name}}', field.state.value.name)}
             onClick={clearFile}
           >
             <XIcon />

@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useIntlayer } from 'react-intlayer'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { DialogProps } from '@/shared/ui/dialog-provider'
 import { templateMutations } from '@/entities/template'
 import { templateKeys } from '@/entities/template'
 import { getMessageFromError } from '@/shared/lib/utils'
+import { useAppLocale } from '@/shared/lib/i18n'
 import { Button } from '@/shared/ui/button'
 import { Checkbox } from '@/shared/ui/checkbox'
 import { Label } from '@/shared/ui/label'
@@ -30,6 +32,8 @@ export function DeleteTemplateDialog({
   templateName,
   onClose,
 }: DialogProps<DeleteTemplateDialogProps>) {
+  const { locale } = useAppLocale()
+  const content = useIntlayer('delete-template')
   const queryClient = useQueryClient()
   const [hardDelete, setHardDelete] = useState(false)
 
@@ -42,7 +46,7 @@ export function DeleteTemplateDialog({
       onClose()
     },
     onError: (e) => {
-      toast.error(getMessageFromError(e))
+      toast.error(getMessageFromError(e, undefined, locale))
     },
   })
 
@@ -59,9 +63,11 @@ export function DeleteTemplateDialog({
       loading={mutation.isPending}
     >
       <DialogHeader>
-        <DialogTitle>Удалить шаблон</DialogTitle>
+        <DialogTitle>{content.title}</DialogTitle>
         <DialogDescription>
-          Вы уверены, что хотите удалить шаблон "{templateName}"? Это действие нельзя отменить.
+          {content.descriptionBeforeName}
+          {templateName}
+          {content.descriptionAfterName}
         </DialogDescription>
       </DialogHeader>
 
@@ -75,7 +81,7 @@ export function DeleteTemplateDialog({
           htmlFor="hard-delete"
           className="text-sm text-muted-foreground"
         >
-          Удалить без возможности восстановления
+          {content.hardDelete}
         </Label>
       </div>
 
@@ -86,7 +92,7 @@ export function DeleteTemplateDialog({
           onClick={onClose}
           disabled={mutation.isPending}
         >
-          Отмена
+          {content.cancel}
         </Button>
         <Button
           type="button"
@@ -94,7 +100,7 @@ export function DeleteTemplateDialog({
           onClick={handleConfirm}
           loading={mutation.isPending}
         >
-          Удалить
+          {content.delete}
         </Button>
       </DialogFooter>
     </DialogContent>

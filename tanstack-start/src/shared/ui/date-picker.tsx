@@ -1,6 +1,8 @@
 import * as React from 'react'
-import { format } from 'date-fns'
+import { formatDate, DATE_FORMATS } from '@/shared/lib/formatDate'
+import { useAppLocale } from '@/shared/lib/i18n'
 import { CalendarIcon, XIcon } from 'lucide-react'
+import { useIntlayer } from 'react-intlayer'
 
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
@@ -24,13 +26,16 @@ export function DatePicker({
   onChange,
   onBlur,
   disabled,
-  placeholder = 'Выберите дату',
+  placeholder: placeholderProp,
   className,
   id,
   name,
   'aria-invalid': ariaInvalid,
 }: DatePickerProps) {
+  const { locale } = useAppLocale()
+  const content = useIntlayer('shared-ui-date-picker')
   const [open, setOpen] = React.useState(false)
+  const placeholder = placeholderProp ?? content.chooseDate.value
 
   const selected = value && !isNaN(value.getTime()) ? value : undefined
 
@@ -58,7 +63,9 @@ export function DatePicker({
               )}
             >
               <CalendarIcon className="size-4" />
-              {selected ? format(selected, 'dd.MM.yyyy') : placeholder}
+              {selected
+                ? formatDate(selected, DATE_FORMATS.SHORT_DATE, undefined, locale)
+                : placeholder}
             </Button>
           }
         />
@@ -83,7 +90,7 @@ export function DatePicker({
           variant="ghost"
           size="icon"
           className="absolute right-1 top-1/2 size-7 -translate-y-1/2"
-          aria-label="Очистить дату"
+          aria-label={content.clearDate.value}
           onClick={() => onChange?.(undefined)}
         >
           <XIcon className="size-3.5" />

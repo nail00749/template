@@ -1,19 +1,22 @@
 import { format } from 'date-fns'
-import { ru } from 'date-fns/locale'
+import { ru, enUS } from 'date-fns/locale'
 import type { FormatOptions } from 'date-fns'
 
 const DEFAULT_FORMAT = 'd MMMM yyyy'
-const DEFAULT_LOCALE = ru
+import type { AppLocale } from '@/shared/lib/i18n'
+
+const dateLocales = { ru, en: enUS }
 
 export function formatDate(
   date: Date | string | number,
   formatString: string = DEFAULT_FORMAT,
   options?: Omit<FormatOptions, 'locale'>,
+  locale: AppLocale = 'ru',
 ): string {
   const dateObj = date instanceof Date ? date : new Date(date)
 
   return format(dateObj, formatString, {
-    locale: DEFAULT_LOCALE,
+    locale: dateLocales[locale],
     ...options,
   })
 }

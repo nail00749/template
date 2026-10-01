@@ -3,8 +3,7 @@ import { LoginPage } from '@/pages/login'
 import { meQueryOptions } from '@/entities/session'
 
 export const Route = createFileRoute('/login')({
-  head: () => ({ meta: [{ title: 'Вход — Admin Panel' }] }),
-  beforeLoad: async ({ context }) => {
+  beforeLoad: async ({ context }): Promise<void> => {
     const auth = await context.queryClient.fetchQuery({
       ...meQueryOptions(),
       staleTime: 0,
@@ -14,5 +13,6 @@ export const Route = createFileRoute('/login')({
       throw redirect({ to: '/' })
     }
   },
+  staticData: { titleKey: 'login' },
   component: LoginPage,
 })

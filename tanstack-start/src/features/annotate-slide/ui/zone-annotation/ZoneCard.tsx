@@ -1,11 +1,10 @@
 import type { FieldType, ZoneResponse } from '@/shared/api/admin'
 import { cn } from '@/shared/lib/utils'
 import { Badge } from '@/shared/ui/badge'
+import { useIntlayer } from 'react-intlayer'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
-import { FIELD_TYPE_LABELS, SOURCE_COLORS, SOURCE_LABELS } from './zone-constants'
+import { ALL_FIELD_TYPES, SOURCE_COLORS } from './zone-constants'
 import { normalizeRect } from './zone-geometry'
-
-const ALL_FIELD_TYPES = Object.keys(FIELD_TYPE_LABELS) as FieldType[]
 
 interface ZoneCardProps {
   zone: ZoneResponse
@@ -17,8 +16,9 @@ interface ZoneCardProps {
 }
 
 export function ZoneCard({ zone, value, onChange, index, isActive, onHover }: ZoneCardProps) {
-  const selectLabel = FIELD_TYPE_LABELS[value] ?? value
-  const sourceLabel = SOURCE_LABELS[zone.source] ?? zone.source
+  const content = useIntlayer('annotate-slide')
+  const selectLabel = content.fieldTypes[value] ?? value
+  const sourceLabel = content.sources[zone.source] ?? zone.source
   const sourceColor = SOURCE_COLORS[zone.source]
   const hasGeometry = normalizeRect(zone.rect, zone.slide_size) != null
 
@@ -53,10 +53,12 @@ export function ZoneCard({ zone, value, onChange, index, isActive, onHover }: Zo
           </div>
           {zone.placeholder_idx != null && (
             <span className="text-xs text-muted-foreground">
-              Индекс плейсхолдера: {zone.placeholder_idx}
+              {content.placeholderIndex} {zone.placeholder_idx}
             </span>
           )}
-          {!hasGeometry && <span className="text-xs text-muted-foreground">Без геометрии</span>}
+          {!hasGeometry && (
+            <span className="text-xs text-muted-foreground">{content.noGeometry}</span>
+          )}
         </div>
       </div>
 
@@ -77,7 +79,7 @@ export function ZoneCard({ zone, value, onChange, index, isActive, onHover }: Zo
               key={ft}
               value={ft}
             >
-              {FIELD_TYPE_LABELS[ft] ?? ft}
+              {content.fieldTypes[ft] ?? ft}
             </SelectItem>
           ))}
         </SelectContent>

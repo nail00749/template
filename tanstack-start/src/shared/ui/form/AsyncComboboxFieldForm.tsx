@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useState } from 'react'
+import { useIntlayer } from 'react-intlayer'
 import { Button } from '@/shared/ui/button'
 import {
   Combobox,
@@ -44,8 +45,8 @@ export function AsyncComboboxFieldForm({
   options,
   onSearchValueChange,
   description,
-  placeholder = 'Начните вводить для поиска',
-  emptyMessage = 'Ничего не найдено',
+  placeholder: placeholderProp,
+  emptyMessage: emptyMessageProp,
   errorMessage,
   selectedOption: selectedOptionProp,
   disabled,
@@ -53,10 +54,14 @@ export function AsyncComboboxFieldForm({
   isFetching = false,
   hasNextPage = false,
   isLoadingMore = false,
-  loadMoreLabel = 'Показать ещё',
+  loadMoreLabel: loadMoreLabelProp,
   debounceMs = 250,
   onLoadMore,
 }: AsyncComboboxFieldFormProps) {
+  const content = useIntlayer('shared-ui-async-combobox-field')
+  const placeholder = placeholderProp ?? content.placeholder.value
+  const emptyMessage = emptyMessageProp ?? content.empty.value
+  const loadMoreLabel = loadMoreLabelProp ?? content.loadMore.value
   const field = useFieldContext<string>()
   const selectedOptionFromProps =
     selectedOptionProp?.value === field.state.value ? selectedOptionProp : null
@@ -127,7 +132,7 @@ export function AsyncComboboxFieldForm({
                 role="status"
                 className="sr-only"
               >
-                Загрузка вариантов
+                {content.loading}
               </span>
             </>
           ) : (
@@ -179,7 +184,7 @@ export function AsyncComboboxFieldForm({
           role="status"
           className="sr-only"
         >
-          Обновление результатов поиска
+          {content.updating}
         </span>
       )}
 

@@ -1,4 +1,5 @@
 import type { Key, ReactNode } from 'react'
+import { useIntlayer } from 'react-intlayer'
 import { ArrowDownIcon, ArrowUpIcon, PlusIcon, Trash2Icon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { FieldDescription, FieldError, FieldLegend, FieldSet } from '@/shared/ui/field'
@@ -30,14 +31,18 @@ export function FieldArrayForm<TItem>({
   getItemKey,
   children,
   description,
-  addLabel = 'Добавить',
-  emptyContent = 'Элементы не добавлены',
-  itemLabel = 'Элемент',
+  addLabel: addLabelProp,
+  emptyContent: emptyContentProp,
+  itemLabel: itemLabelProp,
   minItems = 0,
   maxItems,
   disabled = false,
   allowReorder = true,
 }: FieldArrayFormProps<TItem>) {
+  const content = useIntlayer('shared-ui-field-array')
+  const addLabel = addLabelProp ?? content.add.value
+  const emptyContent = emptyContentProp ?? content.empty.value
+  const itemLabel = itemLabelProp ?? content.item.value
   const field = useFieldContext<TItem[]>()
   const items = field.state.value ?? []
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
@@ -88,7 +93,9 @@ export function FieldArrayForm<TItem>({
                         variant="ghost"
                         size="icon-sm"
                         disabled={disabled || index === 0}
-                        aria-label={`Переместить ${itemLabel.toLowerCase()} ${index + 1} вверх`}
+                        aria-label={content.moveUp.value
+                          .replace('{{item}}', itemLabel.toLowerCase())
+                          .replace('{{index}}', String(index + 1))}
                         onClick={() => field.moveValue(index, index - 1)}
                       >
                         <ArrowUpIcon />
@@ -98,7 +105,9 @@ export function FieldArrayForm<TItem>({
                         variant="ghost"
                         size="icon-sm"
                         disabled={disabled || index === items.length - 1}
-                        aria-label={`Переместить ${itemLabel.toLowerCase()} ${index + 1} вниз`}
+                        aria-label={content.moveDown.value
+                          .replace('{{item}}', itemLabel.toLowerCase())
+                          .replace('{{index}}', String(index + 1))}
                         onClick={() => field.moveValue(index, index + 1)}
                       >
                         <ArrowDownIcon />
@@ -111,7 +120,9 @@ export function FieldArrayForm<TItem>({
                     variant="ghost"
                     size="icon-sm"
                     disabled={disabled || items.length <= minItems}
-                    aria-label={`Удалить ${itemLabel.toLowerCase()} ${index + 1}`}
+                    aria-label={content.remove.value
+                      .replace('{{item}}', itemLabel.toLowerCase())
+                      .replace('{{index}}', String(index + 1))}
                     onClick={() => field.removeValue(index)}
                   >
                     <Trash2Icon />

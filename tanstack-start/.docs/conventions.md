@@ -114,8 +114,7 @@ export const getVersionStatusBadgeVariant = (status: ChecklistVersionStatus) => 
 }
 ```
 
-Do not hardcode enum/status mappings inside JSX. Ordinary one-off UI copy such
-as a button label or page heading may remain in JSX.
+Do not hardcode enum/status mappings inside JSX. User-facing copy belongs in co-located Intlayer dictionaries; see `.docs/i18n.md`.
 
 ## Shared Utilities
 

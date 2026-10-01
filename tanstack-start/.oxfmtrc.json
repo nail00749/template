@@ -8,6 +8,7 @@
   "ignorePatterns": [
     ".template.json",
     ".output/",
+    ".intlayer/",
     "dist/",
     "node_modules/",
     "bun.lock",

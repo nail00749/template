@@ -1,3 +1,4 @@
+import { createRequiredString } from '@/shared/lib/schemas'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -9,7 +10,8 @@ import { templateMutations } from '@/entities/template'
 import { templateKeys } from '@/entities/template'
 import { useAppForm } from '@/shared/ui/form'
 import { getMessageFromError } from '@/shared/lib/utils'
-import { requiredString } from '@/shared/lib/schemas'
+import { useAppLocale, type AppLocale } from '@/shared/lib/i18n'
+import { useIntlayer } from 'react-intlayer'
 import { Button } from '@/shared/ui/button'
 import {
   DialogContent,
@@ -19,18 +21,27 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog'
 
-const editTemplateSchema = z.object({
-  name: requiredString
-    .min(4, { message: 'Название должно содержать минимум 4 символа' })
-    .max(64, { message: 'Название должно содержать максимум 64 символа' }),
-  max_capacity_chars: z
-    .number({ message: 'Недопустимое значение' })
-    .int()
-    .min(64, { message: 'Минимальная ёмкость — 64 символа' })
-    .max(10000, { message: 'Максимальная ёмкость — 10000 символов' }),
-})
+interface EditTemplateValidationMessages {
+  nameMin: string
+  nameMax: string
+  invalidNumber: string
+  capacityMin: string
+  capacityMax: string
+}
 
-type EditTemplateFormValues = z.infer<typeof editTemplateSchema>
+const createEditTemplateSchema = (messages: EditTemplateValidationMessages, locale: AppLocale) =>
+  z.object({
+    name: createRequiredString(locale)
+      .min(4, { message: messages.nameMin })
+      .max(64, { message: messages.nameMax }),
+    max_capacity_chars: z
+      .number({ message: messages.invalidNumber })
+      .int({ message: messages.invalidNumber })
+      .min(64, { message: messages.capacityMin })
+      .max(10000, { message: messages.capacityMax }),
+  })
+
+type EditTemplateFormValues = z.infer<ReturnType<typeof createEditTemplateSchema>>
 
 interface EditTemplateDialogProps {
   templateId: string
@@ -44,6 +55,18 @@ export function EditTemplateDialog({
   initialMaxCapacityChars,
   onClose,
 }: DialogProps<EditTemplateDialogProps>) {
+  const { locale } = useAppLocale()
+  const content = useIntlayer('edit-template')
+  const editTemplateSchema = createEditTemplateSchema(
+    {
+      nameMin: content.nameMin.value,
+      nameMax: content.nameMax.value,
+      invalidNumber: content.invalidNumber.value,
+      capacityMin: content.capacityMin.value,
+      capacityMax: content.capacityMax.value,
+    },
+    locale,
+  )
   const queryClient = useQueryClient()
   const [conflictName, setConflictName] = useState<string | null>(null)
   const defaultValues = {
@@ -59,7 +82,7 @@ export function EditTemplateDialog({
       void queryClient.invalidateQueries({
         queryKey: templateKeys.templateDetail(templateId),
       })
-      toast.success('Шаблон обновлён')
+      toast.success(content.updated.value)
       onClose()
     },
   })
@@ -81,7 +104,7 @@ export function EditTemplateDialog({
         if (isAxiosError(e) && e.response?.status === 409) {
           setConflictName(value.name)
         }
-        toast.error(getMessageFromError(e))
+        toast.error(getMessageFromError(e, undefined, locale))
       }
     },
   })
@@ -89,8 +112,8 @@ export function EditTemplateDialog({
   return (
     <DialogContent className="max-w-[95vw] sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Редактировать шаблон</DialogTitle>
-        <DialogDescription>Измените название шаблона презентации.</DialogDescription>
+        <DialogTitle>{content.title}</DialogTitle>
+        <DialogDescription>{content.description}</DialogDescription>
       </DialogHeader>
 
       <form
@@ -101,13 +124,13 @@ export function EditTemplateDialog({
         className="space-y-4"
       >
         <form.AppField name="name">
-          {(field) => <field.TextFieldForm label="Название шаблона" />}
+          {(field) => <field.TextFieldForm label={content.name.value} />}
         </form.AppField>
 
         <form.AppField name="max_capacity_chars">
           {(field) => (
             <field.NumberFieldForm
-              label="Макс. ёмкость (символы)"
+              label={content.capacity.value}
               mode="integer"
             />
           )}
@@ -119,12 +142,14 @@ export function EditTemplateDialog({
             variant="outline"
             onClick={onClose}
           >
-            Отмена
+            {content.cancel}
           </Button>
           <form.AppForm>
             <form.Subscribe selector={(state) => state.values.name}>
               {(name) => (
-                <form.SubmitButton disabled={conflictName === name}>Сохранить</form.SubmitButton>
+                <form.SubmitButton disabled={conflictName === name}>
+                  {content.save}
+                </form.SubmitButton>
               )}
             </form.Subscribe>
           </form.AppForm>

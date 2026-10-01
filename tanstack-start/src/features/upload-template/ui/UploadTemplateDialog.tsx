@@ -1,10 +1,11 @@
+import { createRequiredString } from '@/shared/lib/schemas'
+import { useAppLocale, type AppLocale } from '@/shared/lib/i18n'
 import { templateKeys } from '@/entities/template'
 import { templateMutations } from '@/entities/template'
 import type { BodyUploadTemplateApiV1AdminTemplatesPost } from '@/shared/api/admin'
 import type { DialogProps } from '@/shared/ui/dialog-provider'
 
 import { useAppForm } from '@/shared/ui/form'
-import { requiredString } from '@/shared/lib/schemas'
 import { Button } from '@/shared/ui/button'
 import {
   DialogContent,
@@ -19,31 +20,57 @@ import { isAxiosError } from 'axios'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { useIntlayer } from 'react-intlayer'
 
-const fileRequiredMessage = 'Выберите файл шаблона'
-const pptxExtensionMessage = 'Поддерживаются только файлы с расширением .pptx'
+interface UploadTemplateValidationMessages {
+  nameMin: string
+  nameMax: string
+  fileRequired: string
+  pptxExtension: string
+  invalidNumber: string
+  capacityMin: string
+  capacityMax: string
+}
 
-const uploadTemplateSchema = z.object({
-  name: requiredString
-    .min(4, { message: 'Название должно содержать минимум 4 символа' })
-    .max(64, { message: 'Название должно содержать максимум 64 символа' }),
-  file: z
-    .custom<File | null>((value) => value instanceof File, {
-      error: fileRequiredMessage,
-    })
-    .refine((file) => file instanceof File && file.name.toLowerCase().endsWith('.pptx'), {
-      error: pptxExtensionMessage,
-    }),
-  max_capacity_chars: z
-    .number({ message: 'Недопустимое значение' })
-    .int()
-    .min(64, { message: 'Минимальная ёмкость — 64 символа' })
-    .max(10000, { message: 'Максимальная ёмкость — 10000 символов' }),
-})
+const createUploadTemplateSchema = (
+  messages: UploadTemplateValidationMessages,
+  locale: AppLocale,
+) =>
+  z.object({
+    name: createRequiredString(locale)
+      .min(4, { message: messages.nameMin })
+      .max(64, { message: messages.nameMax }),
+    file: z
+      .custom<File | null>((value) => value instanceof File, {
+        error: messages.fileRequired,
+      })
+      .refine((file) => file instanceof File && file.name.toLowerCase().endsWith('.pptx'), {
+        error: messages.pptxExtension,
+      }),
+    max_capacity_chars: z
+      .number({ message: messages.invalidNumber })
+      .int({ message: messages.invalidNumber })
+      .min(64, { message: messages.capacityMin })
+      .max(10000, { message: messages.capacityMax }),
+  })
 
-type UploadTemplateFormValues = z.infer<typeof uploadTemplateSchema>
+type UploadTemplateFormValues = z.infer<ReturnType<typeof createUploadTemplateSchema>>
 
 export function UploadTemplateDialog({ onClose }: DialogProps<Record<string, never>>) {
+  const { locale } = useAppLocale()
+  const content = useIntlayer('upload-template')
+  const uploadTemplateSchema = createUploadTemplateSchema(
+    {
+      nameMin: content.nameMin.value,
+      nameMax: content.nameMax.value,
+      fileRequired: content.fileRequired.value,
+      pptxExtension: content.pptxExtension.value,
+      invalidNumber: content.invalidNumber.value,
+      capacityMin: content.capacityMin.value,
+      capacityMax: content.capacityMax.value,
+    },
+    locale,
+  )
   const queryClient = useQueryClient()
   const [conflictName, setConflictName] = useState<string | null>(null)
   const defaultValues: UploadTemplateFormValues = {
@@ -58,7 +85,7 @@ export function UploadTemplateDialog({ onClose }: DialogProps<Record<string, nev
     onSuccess: (data) => {
       setConflictName(null)
       void queryClient.invalidateQueries({ queryKey: templateKeys.templates() })
-      toast.success('Шаблон успешно загружен')
+      toast.success(content.uploaded.value)
       onClose()
       void navigate({ to: '/templates/$templateId', params: { templateId: data.id } })
     },
@@ -71,7 +98,7 @@ export function UploadTemplateDialog({ onClose }: DialogProps<Record<string, nev
     },
     onSubmit: async ({ value }) => {
       if (!value.file) {
-        toast.error('Выберите файл шаблона')
+        toast.error(content.fileRequired.value)
         return
       }
 
@@ -94,8 +121,8 @@ export function UploadTemplateDialog({ onClose }: DialogProps<Record<string, nev
   return (
     <DialogContent className="max-w-[95vw] sm:max-w-xl">
       <DialogHeader>
-        <DialogTitle>Загрузить шаблон</DialogTitle>
-        <DialogDescription>Загрузите новый шаблон презентации в формате PPTX.</DialogDescription>
+        <DialogTitle>{content.title}</DialogTitle>
+        <DialogDescription>{content.description}</DialogDescription>
       </DialogHeader>
 
       <form
@@ -108,9 +135,9 @@ export function UploadTemplateDialog({ onClose }: DialogProps<Record<string, nev
         <form.AppField name="name">
           {(field) => (
             <field.TextFieldForm
-              label="Название"
-              placeholder="Мой шаблон"
-              description="Человекочитаемое название шаблона."
+              label={content.name.value}
+              placeholder={content.namePlaceholder.value}
+              description={content.nameDescription.value}
             />
           )}
         </form.AppField>
@@ -118,9 +145,9 @@ export function UploadTemplateDialog({ onClose }: DialogProps<Record<string, nev
         <form.AppField name="max_capacity_chars">
           {(field) => (
             <field.NumberFieldForm
-              label="Макс. ёмкость (символы)"
+              label={content.capacity.value}
               mode="integer"
-              description="Максимальное количество символов для генерации."
+              description={content.capacityDescription.value}
             />
           )}
         </form.AppField>
@@ -128,14 +155,14 @@ export function UploadTemplateDialog({ onClose }: DialogProps<Record<string, nev
         <form.AppField name="file">
           {(field) => (
             <field.FileFieldForm
-              label="Файл шаблона"
+              label={content.file.value}
               accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation"
               allowedExtensions={['.pptx']}
               allowedMimeTypes={[
                 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
               ]}
-              invalidFileMessage="Поддерживаются только файлы с расширением .pptx"
-              description="Файл презентации в формате PPTX."
+              invalidFileMessage={content.pptxExtension.value}
+              description={content.fileDescription.value}
             />
           )}
         </form.AppField>
@@ -147,12 +174,14 @@ export function UploadTemplateDialog({ onClose }: DialogProps<Record<string, nev
             onClick={onClose}
             disabled={mutation.isPending}
           >
-            Отмена
+            {content.cancel}
           </Button>
           <form.AppForm>
             <form.Subscribe selector={(state) => state.values.name}>
               {(name) => (
-                <form.SubmitButton disabled={conflictName === name}>Загрузить</form.SubmitButton>
+                <form.SubmitButton disabled={conflictName === name}>
+                  {content.upload}
+                </form.SubmitButton>
               )}
             </form.Subscribe>
           </form.AppForm>

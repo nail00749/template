@@ -1,5 +1,7 @@
 import { Link, Outlet, linkOptions, useLocation, useRouter } from '@tanstack/react-router'
 import { LayoutTemplateIcon, LogOutIcon, ShieldCheckIcon } from 'lucide-react'
+import { useIntlayer } from 'react-intlayer'
+import { LocaleSwitcher } from '@/features/change-locale'
 import { useLogout } from '@/features/logout'
 import { Button } from '@/shared/ui/button'
 import {
@@ -22,12 +24,12 @@ const adminNavItems = [
   {
     link: linkOptions({ to: '/templates' }),
     activePath: '/templates',
-    label: 'Шаблоны',
     icon: LayoutTemplateIcon,
   },
 ]
 
 export function AdminLayout() {
+  const content = useIntlayer('admin-layout')
   const router = useRouter()
   const logoutMutation = useLogout({
     onSuccess: async () => {
@@ -55,7 +57,7 @@ export function AdminLayout() {
                 className="ml-auto group-data-[collapsible=icon]:hidden"
                 onClick={() => void logoutMutation.mutateAsync()}
                 loading={logoutMutation.isPending}
-                aria-label="Выйти"
+                aria-label={content.logout.value}
               >
                 <LogOutIcon className="h-4 w-4" />
               </Button>
@@ -64,7 +66,7 @@ export function AdminLayout() {
 
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel>Навигация</SidebarGroupLabel>
+              <SidebarGroupLabel>{content.navigation}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {adminNavItems.map((item) => {
@@ -75,10 +77,10 @@ export function AdminLayout() {
                         <SidebarMenuButton
                           render={<Link {...item.link} />}
                           isActive={isNavItemActive(item.activePath)}
-                          tooltip={item.label}
+                          tooltip={content.templates.value}
                         >
                           <Icon className="size-4" />
-                          <span>{item.label}</span>
+                          <span>{content.templates}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     )
@@ -94,7 +96,10 @@ export function AdminLayout() {
         <SidebarInset>
           <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger />
-            <h1 className="text-lg font-semibold">Admin panel</h1>
+            <h1 className="text-lg font-semibold">{content.adminPanel}</h1>
+            <div className="ml-auto">
+              <LocaleSwitcher />
+            </div>
           </header>
 
           <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 px-4 py-6 lg:px-6">

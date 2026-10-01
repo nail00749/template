@@ -3,12 +3,14 @@ import { toast } from 'sonner'
 import { templateKeys } from '@/entities/template'
 import { templateMutations } from '@/entities/template'
 import { getMessageFromError } from '@/shared/lib/utils'
+import { useAppLocale } from '@/shared/lib/i18n'
 
 interface UseTemplateActionsOptions {
   templateId: string
 }
 
 export function useDeleteSlide({ templateId }: UseTemplateActionsOptions) {
+  const { locale } = useAppLocale()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -20,7 +22,7 @@ export function useDeleteSlide({ templateId }: UseTemplateActionsOptions) {
       })
     },
     onError: (e) => {
-      toast.error(getMessageFromError(e))
+      toast.error(getMessageFromError(e, undefined, locale))
     },
   })
 }

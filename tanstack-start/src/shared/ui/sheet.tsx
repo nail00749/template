@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Dialog as SheetPrimitive } from '@base-ui/react/dialog'
+import { useIntlayer } from 'react-intlayer'
 
 import { XIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
@@ -64,6 +65,7 @@ function SheetContent({
   side?: 'top' | 'right' | 'bottom' | 'left'
   showCloseButton?: boolean
 }) {
+  const content = useIntlayer('shared-ui-dialog')
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -89,7 +91,7 @@ function SheetContent({
             }
           >
             <XIcon />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{content.close}</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Popup>
