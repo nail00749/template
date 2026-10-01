@@ -6,6 +6,7 @@
   "singleAttributePerLine": true,
   "bracketSameLine": false,
   "ignorePatterns": [
+    ".template.json",
     ".output/",
     "dist/",
     "node_modules/",

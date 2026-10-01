@@ -12,7 +12,10 @@ type Options<T> = {
   initialSort?: SortState<T>
   initialPageIndex?: number
   initialPageSize?: number
-}
+} & (
+  | { pagination: PaginationState; onPaginationChange: OnChangeFn<PaginationState> }
+  | { pagination?: never; onPaginationChange?: never }
+)
 
 export const useDataGridState = <T>(options: Options<T> = {}) => {
   const { initialSort, initialPageIndex = 0, initialPageSize = 10 } = options
@@ -28,7 +31,7 @@ export const useDataGridState = <T>(options: Options<T> = {}) => {
       },
     ]
   })
-  const [pagination, setPagination] = useState<PaginationState>({
+  const [localPagination, setLocalPagination] = useState<PaginationState>({
     pageIndex: initialPageIndex,
     pageSize: initialPageSize,
   })
@@ -44,21 +47,27 @@ export const useDataGridState = <T>(options: Options<T> = {}) => {
     }
   }, [sorting])
 
-  const onSortingChange = useCallback<OnChangeFn<SortingState>>((updater) => {
-    setSorting((prevSorting) => {
-      return typeof updater === 'function' ? updater(prevSorting) : updater
-    })
-    setPagination((prevPagination) => ({
-      ...prevPagination,
-      pageIndex: 0,
-    }))
-  }, [])
+  const pagination = options.pagination ?? localPagination
+  const controlledOnPaginationChange = options.onPaginationChange
 
-  const onPaginationChange = useCallback<OnChangeFn<PaginationState>>((updater) => {
-    setPagination((prevPagination) => {
-      return typeof updater === 'function' ? updater(prevPagination) : updater
-    })
-  }, [])
+  const onPaginationChange = useCallback<OnChangeFn<PaginationState>>(
+    (updater) => {
+      if (controlledOnPaginationChange) {
+        controlledOnPaginationChange(updater)
+        return
+      }
+      setLocalPagination(updater)
+    },
+    [controlledOnPaginationChange],
+  )
+
+  const onSortingChange = useCallback<OnChangeFn<SortingState>>(
+    (updater) => {
+      setSorting(updater)
+      onPaginationChange((previous) => ({ ...previous, pageIndex: 0 }))
+    },
+    [onPaginationChange],
+  )
 
   const setSort = useCallback(
     (key: keyof T, direction: SortDirection) => {
@@ -72,19 +81,19 @@ export const useDataGridState = <T>(options: Options<T> = {}) => {
     [onSortingChange],
   )
 
-  const setPageIndex = useCallback((pageIndex: number) => {
-    setPagination((prevPagination) => ({
-      ...prevPagination,
-      pageIndex,
-    }))
-  }, [])
+  const setPageIndex = useCallback(
+    (pageIndex: number) => {
+      onPaginationChange((previous) => ({ ...previous, pageIndex }))
+    },
+    [onPaginationChange],
+  )
 
-  const setPageSize = useCallback((pageSize: number) => {
-    setPagination({
-      pageIndex: 0,
-      pageSize,
-    })
-  }, [])
+  const setPageSize = useCallback(
+    (pageSize: number) => {
+      onPaginationChange({ pageIndex: 0, pageSize })
+    },
+    [onPaginationChange],
+  )
 
   const queryParams = useMemo(
     () => ({

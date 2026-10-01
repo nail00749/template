@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 import { DataGrid } from '@/shared/ui/DataGrid'
 
 export function TemplatesPage() {
-  const { columns, grid, handleOpenUploadDialog, isLoading, templatesResponse } = useTemplatesPage()
+  const { columns, grid, handleOpenUploadDialog, isLoading, isFetching, templatesResponse } =
+    useTemplatesPage()
 
   return (
     <div className="space-y-6">
@@ -30,6 +31,7 @@ export function TemplatesPage() {
             rows={templatesResponse?.items}
             totalCount={templatesResponse?.total ?? 0}
             isLoading={isLoading}
+            isFetching={isFetching}
             enableSorting={false}
             {...grid}
           />

@@ -164,14 +164,13 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
 
   const handlePaginationChange = useCallback<OnChangeFn<PaginationState>>(
     (updater) => {
-      const nextPagination = typeof updater === 'function' ? updater(pagination) : updater
       if (onPaginationChangeProp) {
-        onPaginationChangeProp(nextPagination)
+        onPaginationChangeProp(updater)
         return
       }
-      setPaginationState(nextPagination)
+      setPaginationState(updater)
     },
-    [onPaginationChangeProp, pagination],
+    [onPaginationChangeProp],
   )
 
   const table = useTable({

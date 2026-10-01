@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { useEffect, useLayoutEffect } from 'react'
+import { useDialogLoadingContext } from './dialog-provider/DialogLoadingContext'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 
 import { XIcon } from 'lucide-react'
@@ -65,6 +67,14 @@ function DialogContent({
   showCloseButton?: boolean
   loading?: boolean
 }) {
+  const loadingContext = useDialogLoadingContext()
+  useLayoutEffect(() => {
+    loadingContext?.setLoading(loading)
+  }, [loading, loadingContext])
+  useEffect(() => {
+    return () => loadingContext?.setLoading(false)
+  }, [loadingContext])
+
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -81,7 +91,7 @@ function DialogContent({
         {loading && <Spinner />}
         {children}
 
-        {showCloseButton && (
+        {showCloseButton && !loading && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
             render={
@@ -94,7 +104,7 @@ function DialogContent({
           >
             <XIcon />
 
-            <span className="sr-only">Close</span>
+            <span className="sr-only">Закрыть</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>

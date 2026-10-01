@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { AlertTriangleIcon } from 'lucide-react'
-import type { DialogProps } from '@/shared/ui/dialog-provider'
+import { AlertTriangleIcon, CircleHelpIcon } from 'lucide-react'
+import type { DialogProps } from './useDialog'
+import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/button'
 import {
   DialogContent,
@@ -15,7 +16,9 @@ export interface ConfirmDialogProps {
   description: string
   confirmLabel?: string
   cancelLabel?: string
-  onConfirm: () => void | Promise<void>
+  confirmVariant?: 'default' | 'destructive'
+  onConfirm: () => Promise<void>
+  onCancel?: () => void
 }
 
 export function ConfirmDialog({
@@ -23,38 +26,55 @@ export function ConfirmDialog({
   description,
   confirmLabel = 'Подтвердить',
   cancelLabel = 'Отмена',
+  confirmVariant = 'destructive',
   onConfirm,
+  onCancel,
   onClose,
 }: DialogProps<ConfirmDialogProps>) {
   const [isPending, setIsPending] = useState(false)
+  const isDestructive = confirmVariant === 'destructive'
+  const ConfirmIcon = isDestructive ? AlertTriangleIcon : CircleHelpIcon
 
   const handleConfirm = async () => {
     setIsPending(true)
     try {
       await onConfirm()
-      onClose()
+      onClose('confirmed')
+    } catch {
+      // Keep the dialog open so the caller can retry after a failed mutation.
     } finally {
       setIsPending(false)
     }
   }
 
   return (
-    <DialogContent className="max-w-[95vw] sm:max-w-lg">
+    <DialogContent
+      className="max-w-[95vw] sm:max-w-lg"
+      loading={isPending}
+    >
       <DialogHeader>
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-            <AlertTriangleIcon className="size-5" />
+          <div
+            className={cn(
+              'flex size-10 items-center justify-center rounded-full',
+              isDestructive ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary',
+            )}
+          >
+            <ConfirmIcon />
           </div>
           <DialogTitle>{title}</DialogTitle>
         </div>
-        <DialogDescription className="break-words pt-2">{description}</DialogDescription>
+        <DialogDescription className="pt-2">{description}</DialogDescription>
       </DialogHeader>
 
       <DialogFooter className="pt-2">
         <Button
           type="button"
           variant="outline"
-          onClick={onClose}
+          onClick={() => {
+            onCancel?.()
+            onClose('cancelled')
+          }}
           disabled={isPending}
         >
           {cancelLabel}
@@ -62,7 +82,7 @@ export function ConfirmDialog({
 
         <Button
           type="button"
-          variant="destructive"
+          variant={confirmVariant}
           loading={isPending}
           onClick={handleConfirm}
         >

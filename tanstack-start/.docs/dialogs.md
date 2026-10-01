@@ -73,6 +73,9 @@ open(ConfirmDialog, 'confirm-delete', {
 - In async confirms, `onConfirm` must return a Promise — `ConfirmDialog` will
   keep its loading state until it resolves and stay open if it rejects
 
+Cancellation callbacks run on real cancel/dismiss events, never effect cleanup.
+StrictMode effect replay does not represent a user closing a dialog.
+
 ## Async Confirm (mutation inside dialog)
 
 Когда кнопка подтверждения запускает mutation, не закрывай диалог до завершения:

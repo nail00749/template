@@ -13,6 +13,7 @@ export function useDeleteSlide({ templateId }: UseTemplateActionsOptions) {
 
   return useMutation({
     ...templateMutations.deleteSlide(),
+    meta: { disableToast: true },
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: templateKeys.templateDetail(templateId),

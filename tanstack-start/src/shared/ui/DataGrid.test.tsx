@@ -1,3 +1,4 @@
+import type { OnChangeFn, PaginationState } from '@tanstack/react-table'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DataGrid } from './DataGrid'
@@ -69,7 +70,7 @@ describe('DataGrid', () => {
   })
 
   it('reports controlled server-side pagination', () => {
-    const onPaginationChange = vi.fn()
+    const onPaginationChange = vi.fn<OnChangeFn<PaginationState>>()
 
     render(
       <DataGrid
@@ -84,7 +85,13 @@ describe('DataGrid', () => {
     expect(screen.getByText('1 / 3')).not.toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Go to next page' }))
 
-    expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 10 })
+    expect(onPaginationChange).toHaveBeenCalledOnce()
+    const updater = onPaginationChange.mock.calls[0]?.[0]
+    expect(typeof updater).toBe('function')
+    if (typeof updater === 'function') {
+      expect(updater({ pageIndex: 0, pageSize: 10 })).toEqual({ pageIndex: 1, pageSize: 10 })
+      expect(updater({ pageIndex: 3, pageSize: 20 })).toEqual({ pageIndex: 4, pageSize: 20 })
+    }
   })
 
   it('keeps the horizontal scroll area at the bottom with a single row', () => {

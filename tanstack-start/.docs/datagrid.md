@@ -46,6 +46,19 @@ function MyPage() {
 }
 ```
 
+## URL pagination
+
+For URL-backed lists, pass `pagination` and `onPaginationChange` together to
+`useDataGridState`. Derive `pageIndex` from `search.page - 1` and `pageSize`
+from `search.perPage`. Resolve functional updaters inside the navigation
+`search(previous)` callback using that previous URL state, preserving other
+search params. Pass the hook's pagination and handler to DataGrid.
+
+The URL owns pagination in this mode. Do not copy it into local state with an
+effect or reset local pagination before navigation; set `page: 1` in the same
+URL update as a filter change. Lists without URL state can continue using
+`initialPageIndex` and `initialPageSize` for local pagination.
+
 ## Column Definitions
 
 - `accessorKey` — for direct field access

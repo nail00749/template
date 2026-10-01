@@ -1,0 +1,12 @@
+{
+  "id": "keycloak-auth",
+  "label": "Keycloak authentication",
+  "description": "Backend-owned OIDC login with safe return-to navigation for protected routes",
+  "overwrites": [
+    ".docs/auth.md",
+    "src/pages/login/ui/LoginPage.test.tsx",
+    "src/pages/login/ui/LoginPage.tsx",
+    "src/routes/_admin.tsx",
+    "src/routes/login.tsx"
+  ]
+}

@@ -43,12 +43,13 @@ export function useTemplateDetailPage(templateId: string) {
       title: 'Удалить слайд',
       description: `Вы уверены, что хотите удалить слайд ${slide.slide_number}?`,
       confirmLabel: 'Удалить',
-      onConfirm: () =>
-        deleteSlideMutation.mutate({
+      onConfirm: async () => {
+        await deleteSlideMutation.mutateAsync({
           templateId,
           slideNumber: slide.slide_number,
           params: { hard: true },
-        }),
+        })
+      },
     })
   }
 

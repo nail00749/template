@@ -1,0 +1,19 @@
+{
+  "name": "@nail00749/tanstack-scaffold",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "create-tanstack": "./scaffold/cli.ts"
+  },
+  "type": "module",
+  "scripts": {
+    "create": "bun ./scaffold/cli.ts",
+    "test": "bun test ./scaffold/core.test.ts ./scaffold/cli.test.ts ./scaffold/features/keycloak-auth/overlay/src/shared/auth/post-login-redirect.test.ts"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.8.0"
+  },
+  "engines": {
+    "bun": ">=1.2.0"
+  }
+}

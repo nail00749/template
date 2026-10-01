@@ -15,7 +15,11 @@ export function useTemplatesPage() {
   })
   const dialog = useDialog()
 
-  const { data: templatesResponse, isLoading } = useQuery(
+  const {
+    data: templatesResponse,
+    isPending,
+    isFetching,
+  } = useQuery(
     templateQueries.templates({
       offset: grid.queryParams.offset,
       limit: grid.queryParams.limit,
@@ -50,7 +54,8 @@ export function useTemplatesPage() {
     columns,
     grid,
     handleOpenUploadDialog,
-    isLoading,
+    isLoading: isPending,
+    isFetching,
     templatesResponse,
   }
 }
