@@ -9,7 +9,7 @@ import {
   tableFeatures,
   useTable,
 } from '@tanstack/react-table'
-import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
+import { ChevronDownIcon, ChevronUpIcon, InboxIcon } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useIntlayer } from 'react-intlayer'
 import type { LinkOptions } from '@tanstack/react-router'
@@ -203,10 +203,13 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
   const isEmpty = table.getRowModel().rows.length === 0 && !showSkeleton
   const pageCount = table.getPageCount()
   const currentPage = pageCount === 0 ? 0 : pagination.pageIndex + 1
-  const hasPagination = !hidePagination && pageCount > 1
-  const pageStart = totalCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1
+  const hasPagination =
+    !hidePagination && totalCount > 0 && (pageCount > 1 || table.getCanPreviousPage())
+  const pageStart = isEmpty || totalCount === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1
   const pageEnd =
-    totalCount === 0 ? 0 : Math.min(pageStart + table.getRowModel().rows.length - 1, totalCount)
+    isEmpty || totalCount === 0
+      ? 0
+      : Math.min(pageStart + table.getRowModel().rows.length - 1, totalCount)
   let dataSummary = content.summary.value
     .replace('{{start}}', String(pageStart))
     .replace('{{end}}', String(pageEnd))
@@ -231,175 +234,178 @@ export function DataGrid<T extends RowData>(props: DataGridProps<T>) {
             {content.updating}
           </span>
         )}
-        <Table
-          className="table-fixed w-full"
-          style={{
-            minWidth: getTableMinWidth(columns),
-          }}
-        >
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="bg-muted/90 backdrop-blur-sm border-b shadow-sm hover:bg-muted/90 sticky top-0 z-10"
-              >
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    className="relative box-border"
-                    key={header.id}
-                    colSpan={header.colSpan}
-                    style={{
-                      width: header.getSize(),
-                    }}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <button
-                        type="button"
-                        onClick={
-                          header.column.getCanSort()
-                            ? header.column.getToggleSortingHandler()
-                            : undefined
-                        }
-                        className={[
-                          'flex w-full items-center gap-1 text-left text-muted-foreground',
-                          header.column.getCanSort()
-                            ? 'cursor-pointer select-none'
-                            : 'cursor-default',
-                        ].join(' ')}
-                      >
-                        <span className="truncate">
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </span>
-                        {header.column.getCanSort() && (
-                          <span className="text-muted-foreground">
-                            {header.column.getIsSorted() === 'asc' && (
-                              <ChevronUpIcon className="size-4" />
-                            )}
-                            {header.column.getIsSorted() === 'desc' && (
-                              <ChevronDownIcon className="size-4" />
-                            )}
-                            {/* {!header.column.getIsSorted() && (
+        {isEmpty ? (
+          <div
+            className="flex min-w-0 flex-col items-center justify-center gap-3 px-6 py-12 text-center text-sm text-muted-foreground"
+            role="status"
+          >
+            <InboxIcon
+              className="size-10"
+              aria-hidden="true"
+            />
+            <div>{emptyContent}</div>
+          </div>
+        ) : (
+          <Table
+            className="table-fixed w-full"
+            style={{
+              minWidth: getTableMinWidth(columns),
+            }}
+          >
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow
+                  key={headerGroup.id}
+                  className="bg-muted/90 backdrop-blur-sm border-b shadow-sm hover:bg-muted/90 sticky top-0 z-10"
+                >
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      className="relative box-border"
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={{
+                        width: header.getSize(),
+                      }}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <button
+                          type="button"
+                          onClick={
+                            header.column.getCanSort()
+                              ? header.column.getToggleSortingHandler()
+                              : undefined
+                          }
+                          className={[
+                            'flex w-full items-center gap-1 text-left text-muted-foreground',
+                            header.column.getCanSort()
+                              ? 'cursor-pointer select-none'
+                              : 'cursor-default',
+                          ].join(' ')}
+                        >
+                          <span className="truncate">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </span>
+                          {header.column.getCanSort() && (
+                            <span className="text-muted-foreground">
+                              {header.column.getIsSorted() === 'asc' && (
+                                <ChevronUpIcon className="size-4" />
+                              )}
+                              {header.column.getIsSorted() === 'desc' && (
+                                <ChevronDownIcon className="size-4" />
+                              )}
+                              {/* {!header.column.getIsSorted() && (
                               <ChevronsUpDown className="size-4" />
                             )}*/}
-                          </span>
-                        )}
-                      </button>
-                    )}
-                    <div
-                      {...{
-                        onDoubleClick: () => header.column.resetSize(),
-                        // onMouseDown: header.getResizeHandler(),
-                        // onTouchStart: header.getResizeHandler(),
-                        className: [
-                          'absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none touch-none',
-                          'bg-transparent hover:bg-muted/70',
-                          header.column.getIsResizing() ? 'bg-muted/70' : '',
-                        ].join(' '),
-                        style: {
-                          transform: getResizeTransform(
-                            header.column.getIsResizing(),
-                            table.options.columnResizeDirection,
-                            table.state.columnResizing.deltaOffset,
-                          ),
-                        },
-                      }}
-                    />
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {showSkeleton && (
-              <DataGridSkeletonRows
-                columnCount={columns.length}
-                rowCount={Math.min(pagination.pageSize, 5)}
-              />
-            )}
-
-            {!showSkeleton &&
-              !isEmpty &&
-              table.getRowModel().rows.map((row) => {
-                const linkProps = rowLink?.kind === 'href' ? rowLink.href(row.original) : null
-                const isClickable = linkProps !== null || rowLink?.kind === 'callback'
-
-                const handleRowClick = (event: MouseEvent<HTMLTableRowElement>) => {
-                  if (isInteractiveTarget(event)) {
-                    return
-                  }
-
-                  if (rowLink?.kind === 'callback') {
-                    rowLink.onClick(row.original)
-                    return
-                  }
-
-                  if (linkProps !== null) {
-                    void navigate(linkProps)
-                  }
-                }
-
-                return (
-                  <TableRow
-                    key={row.id}
-                    onClick={isClickable ? handleRowClick : undefined}
-                    className={cn(isClickable && 'relative cursor-pointer')}
-                  >
-                    {row.getVisibleCells().map((cell, cellIndex) => {
-                      const isFirstCell = cellIndex === 0
-                      const noTruncate = cell.column.columnDef.meta?.noTruncate
-
-                      return (
-                        <TableCell
-                          key={cell.id}
-                          className="box-border overflow-hidden"
-                          style={{ width: cell.column.getSize() }}
-                        >
-                          {isFirstCell && linkProps && (
-                            <Link
-                              {...linkProps}
-                              aria-label={content.open.value}
-                              className="absolute inset-0 z-0 rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
-                            />
+                            </span>
                           )}
-                          {isFirstCell && rowLink?.kind === 'callback' && (
-                            <button
-                              type="button"
-                              aria-label={content.open.value}
-                              className="absolute inset-0 z-0 rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
-                              onClick={() => rowLink.onClick(row.original)}
-                            />
-                          )}
-                          <div
-                            className={cn(
-                              'relative',
-                              !noTruncate && 'truncate',
-                              isClickable &&
-                                'z-10 pointer-events-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_input]:pointer-events-auto [&_select]:pointer-events-auto [&_textarea]:pointer-events-auto',
-                            )}
+                        </button>
+                      )}
+                      <div
+                        {...{
+                          onDoubleClick: () => header.column.resetSize(),
+                          // onMouseDown: header.getResizeHandler(),
+                          // onTouchStart: header.getResizeHandler(),
+                          className: [
+                            'absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none touch-none',
+                            'bg-transparent hover:bg-muted/70',
+                            header.column.getIsResizing() ? 'bg-muted/70' : '',
+                          ].join(' '),
+                          style: {
+                            transform: getResizeTransform(
+                              header.column.getIsResizing(),
+                              table.options.columnResizeDirection,
+                              table.state.columnResizing.deltaOffset,
+                            ),
+                          },
+                        }}
+                      />
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {showSkeleton && (
+                <DataGridSkeletonRows
+                  columnCount={columns.length}
+                  rowCount={Math.min(pagination.pageSize, 5)}
+                />
+              )}
+
+              {!showSkeleton &&
+                !isEmpty &&
+                table.getRowModel().rows.map((row) => {
+                  const linkProps = rowLink?.kind === 'href' ? rowLink.href(row.original) : null
+                  const isClickable = linkProps !== null || rowLink?.kind === 'callback'
+
+                  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>) => {
+                    if (isInteractiveTarget(event)) {
+                      return
+                    }
+
+                    if (rowLink?.kind === 'callback') {
+                      rowLink.onClick(row.original)
+                      return
+                    }
+
+                    if (linkProps !== null) {
+                      void navigate(linkProps)
+                    }
+                  }
+
+                  return (
+                    <TableRow
+                      key={row.id}
+                      onClick={isClickable ? handleRowClick : undefined}
+                      className={cn(isClickable && 'relative cursor-pointer')}
+                    >
+                      {row.getVisibleCells().map((cell, cellIndex) => {
+                        const isFirstCell = cellIndex === 0
+                        const noTruncate = cell.column.columnDef.meta?.noTruncate
+
+                        return (
+                          <TableCell
+                            key={cell.id}
+                            className="box-border overflow-hidden"
+                            style={{ width: cell.column.getSize() }}
                           >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </div>
-                        </TableCell>
-                      )
-                    })}
-                  </TableRow>
-                )
-              })}
-            {isEmpty && (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-40 text-center align-middle text-sm text-muted-foreground"
-                >
-                  {emptyContent}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                            {isFirstCell && linkProps && (
+                              <Link
+                                {...linkProps}
+                                aria-label={content.open.value}
+                                className="absolute inset-0 z-0 rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+                              />
+                            )}
+                            {isFirstCell && rowLink?.kind === 'callback' && (
+                              <button
+                                type="button"
+                                aria-label={content.open.value}
+                                className="absolute inset-0 z-0 rounded-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+                                onClick={() => rowLink.onClick(row.original)}
+                              />
+                            )}
+                            <div
+                              className={cn(
+                                'relative',
+                                !noTruncate && 'truncate',
+                                isClickable &&
+                                  'z-10 pointer-events-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_input]:pointer-events-auto [&_select]:pointer-events-auto [&_textarea]:pointer-events-auto',
+                              )}
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </div>
+                          </TableCell>
+                        )
+                      })}
+                    </TableRow>
+                  )
+                })}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
-      {(showSkeleton || totalCount > 0) && (
+      {totalCount > 0 && (
         <div className="flex flex-col gap-3 px-1 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-muted-foreground">{dataSummary}</div>
 

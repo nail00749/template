@@ -94,19 +94,24 @@ function ComboboxClear({
 
 function ComboboxInput({
   className,
+  anchorRef,
   children,
   disabled = false,
   showTrigger = true,
   showClear = false,
   ...props
 }: ComboboxPrimitive.Input.Props & {
+  anchorRef?: React.Ref<HTMLDivElement>
   showTrigger?: boolean
   showClear?: boolean
 }) {
   const hasAddon = showTrigger || showClear
 
   return (
-    <InputGroup className={cn('w-auto', className)}>
+    <InputGroup
+      ref={anchorRef}
+      className={cn('w-auto', className)}
+    >
       <ComboboxPrimitive.Input
         render={<InputGroupInput disabled={disabled} />}
         {...props}

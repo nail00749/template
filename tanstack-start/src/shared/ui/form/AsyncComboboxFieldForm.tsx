@@ -10,6 +10,7 @@ import {
   ComboboxItemIndicator,
   ComboboxList,
   ComboboxListSkeleton,
+  useComboboxAnchor,
 } from '@/shared/ui/combobox'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/shared/ui/field'
 import { useDebouncedValue } from '@/shared/lib/hooks/use-debounced-value'
@@ -58,6 +59,7 @@ export function AsyncComboboxFieldForm({
   debounceMs = 250,
   onLoadMore,
 }: AsyncComboboxFieldFormProps) {
+  const anchor = useComboboxAnchor()
   const content = useIntlayer('shared-ui-async-combobox-field')
   const placeholder = placeholderProp ?? content.placeholder.value
   const emptyMessage = emptyMessageProp ?? content.empty.value
@@ -115,6 +117,7 @@ export function AsyncComboboxFieldForm({
         onOpenChange={handleOpenChange}
       >
         <ComboboxInput
+          anchorRef={anchor}
           id={field.name}
           name={field.name}
           className="w-full"
@@ -124,7 +127,7 @@ export function AsyncComboboxFieldForm({
           aria-invalid={isInvalid}
         />
 
-        <ComboboxContent>
+        <ComboboxContent anchor={anchor}>
           {isLoading ? (
             <>
               <ComboboxListSkeleton />

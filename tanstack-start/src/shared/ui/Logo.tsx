@@ -1,16 +1,17 @@
-import type { FC } from 'react'
+import type { ComponentProps } from 'react'
 import { cn } from '@/shared/lib/utils'
 
-interface Props {
-  clastName?: string
-}
+interface LogoProps extends Omit<ComponentProps<'img'>, 'src'> {}
 
-export const Logo: FC<Props> = ({ clastName }) => {
+export function Logo({ className, alt = '', ...props }: LogoProps) {
   return (
     <img
-      src="logo.svg"
-      alt=""
-      className={cn('w-11 h-11', clastName)}
+      src="/logo.svg"
+      alt={alt}
+      width={64}
+      height={64}
+      className={cn('size-11 shrink-0', className)}
+      {...props}
     />
   )
 }

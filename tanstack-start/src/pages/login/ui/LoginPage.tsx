@@ -1,8 +1,8 @@
-import { ShieldCheckIcon } from 'lucide-react'
 import { useIntlayer } from 'react-intlayer'
 import { LocaleSwitcher } from '@/features/change-locale'
 import { env } from '@/shared/config/env'
 import { Button } from '@/shared/ui/button'
+import { Logo } from '@/shared/ui/Logo'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card'
 
 export function LoginPage() {
@@ -15,7 +15,7 @@ export function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-xl">
             <div className="flex items-center justify-center gap-2">
-              <ShieldCheckIcon className="h-6 w-6" />
+              <Logo className="size-6" />
               {content.title}
             </div>
           </CardTitle>

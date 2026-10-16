@@ -1,9 +1,12 @@
 import { Link, Outlet, linkOptions, useLocation, useRouter } from '@tanstack/react-router'
-import { LayoutTemplateIcon, LogOutIcon, ShieldCheckIcon } from 'lucide-react'
+import { LayoutTemplateIcon, LogOutIcon } from 'lucide-react'
 import { useIntlayer } from 'react-intlayer'
 import { LocaleSwitcher } from '@/features/change-locale'
 import { useLogout } from '@/features/logout'
 import { Button } from '@/shared/ui/button'
+import { Logo } from '@/shared/ui/Logo'
+import { Separator } from '@/shared/ui/separator'
+import { AdminBreadcrumbs } from './AdminBreadcrumbs'
 import {
   Sidebar,
   SidebarContent,
@@ -28,7 +31,11 @@ const adminNavItems = [
   },
 ]
 
-export function AdminLayout() {
+interface AdminLayoutProps {
+  templateId?: string
+}
+
+export function AdminLayout({ templateId }: AdminLayoutProps) {
   const content = useIntlayer('admin-layout')
   const router = useRouter()
   const logoutMutation = useLogout({
@@ -48,7 +55,7 @@ export function AdminLayout() {
         <Sidebar collapsible="icon">
           <SidebarHeader>
             <div className="flex items-center gap-2 px-2 py-1">
-              <ShieldCheckIcon className="size-5 shrink-0" />
+              <Logo className="size-5" />
               <span className="font-semibold group-data-[collapsible=icon]:hidden">Admin</span>
               <Button
                 type="button"
@@ -96,8 +103,13 @@ export function AdminLayout() {
         <SidebarInset>
           <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger />
-            <h1 className="text-lg font-semibold">{content.adminPanel}</h1>
-            <div className="ml-auto">
+            <Separator
+              orientation="vertical"
+              className="mx-1 my-auto h-4 self-center"
+            />
+            <h1 className="sr-only">{content.adminPanel}</h1>
+            <AdminBreadcrumbs templateId={templateId} />
+            <div className="ml-auto shrink-0">
               <LocaleSwitcher />
             </div>
           </header>

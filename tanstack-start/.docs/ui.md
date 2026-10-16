@@ -19,7 +19,13 @@ Use components from `@/shared/ui`.
   `container`, `sidebar`
 - **Feedback**: `badge`, `spinner`, `skeleton`, `progress`, `sonner` (Toaster)
 - **Data**: `DataGrid`, `table`, `pagination`, `cells/TruncatedCell`
+- **Navigation**: `breadcrumb` (shadcn Base UI, composed with TanStack Router links)
 - **Branding**: `Logo`, `LogoMts`, `Picture`, `Typography`, `avatar`
+
+Static brand assets live in `public/`: `logo.svg`, `favicon.svg`, and the
+multi-size `favicon.ico` fallback. Reference them with root-relative URLs so
+they work on nested routes. `Logo` is used in the sidebar and login screen;
+the root route registers the favicons for every page. Keep these marks in sync.
 
 Отсутствующий компонент не автоматически относится к `shared/ui`:
 
@@ -27,6 +33,15 @@ Use components from `@/shared/ui`.
 - generic component сначала композируется из существующих primitives;
 - в `shared/ui` он переносится только при отсутствии business semantics и
   реальном повторном использовании.
+
+## Color theme
+
+The app uses neutral graphite/zinc tokens in `app/styles/styles.css`: pale gray
+canvas, white surfaces, graphite primary actions, and a light primary action in
+`.dark`. Accent/hover, sidebar, focus, and chart tokens share the neutral palette.
+Keep red for destructive/error states and green for success. Use semantic tokens
+in components instead of hardcoded brand colors. Both themes set `color-scheme`
+so native browser controls follow the active theme.
 
 ## Base UI — render prop instead of asChild
 
@@ -146,6 +161,13 @@ Options arrays and label maps belong in `*Presentation.ts`, not inline in JSX.
 
 Import from `@/shared/ui/combobox`. Use for searchable dropdowns backed by API data (e.g. selecting a contract type from a list).
 
+For an input with trigger/clear buttons, use one `useComboboxAnchor()` ref:
+pass it as `ComboboxInput.anchorRef` and `ComboboxContent.anchor`. This anchors
+the popup to the outer InputGroup, so `--anchor-width` includes all controls.
+Keep an input's normal `ref` for the input itself; do not replace it with the
+container ref or add fixed popup widths/manual measurement. The shared
+`AsyncComboboxFieldForm` already wires this pair.
+
 Use `Combobox`/`ComboboxFieldForm` for relations to other entities or whenever
 the available values are not known in advance. This includes searching remote
 entities by name, code, or other text. Use `Select`/`SelectFieldForm` only for
@@ -156,6 +178,12 @@ Use `ComboboxSelectTrigger` + `ComboboxValue` as the trigger, not `SelectTrigger
 When building a reusable select backed by a query, wrap it in a dedicated component (e.g. `ContractTypeSelect.tsx`) and accept `value` / `onChange` props.
 
 ## Links
+
+Admin breadcrumbs live in `widgets/admin-layout`. The `_admin` route adapter
+passes the active template ID; the widget reads the existing detail Query cache
+without fetching. Keep the list as a typed TanStack Router link, mark the current
+page with `BreadcrumbPage`, localize navigation labels, and truncate long names
+inside the header. Do not derive labels by splitting URL strings.
 
 Типобезопасные ссылки — только через TanStack Router. Для построения параметров
 используй `linkOptions`:

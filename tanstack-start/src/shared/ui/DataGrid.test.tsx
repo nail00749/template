@@ -124,6 +124,9 @@ describe('DataGrid', () => {
     )
 
     expect(screen.queryByText('Нет данных для отображения')).toBeNull()
+    expect(screen.getByRole('table').querySelectorAll('[data-slot="skeleton"]')).toHaveLength(5)
+    expect(screen.queryByRole('navigation')).toBeNull()
+    expect(screen.queryByText('Загрузка данных...')).toBeNull()
 
     rerender(
       <DataGrid
@@ -137,7 +140,100 @@ describe('DataGrid', () => {
 
     const emptyState = screen.getByText('Нет данных для отображения')
     expect(emptyState).not.toBeNull()
-    expect(emptyState.closest('td')?.classList.contains('h-40')).toBe(true)
+    expect(emptyState.closest('[role="status"]')).not.toBeNull()
+    expect(screen.queryByRole('table')).toBeNull()
+  })
+
+  it('renders the empty state outside the table for wide columns and hides the zero-count footer', () => {
+    const wideColumns: Array<DataGridColumnDef<Item>> = [
+      { accessorKey: 'id', header: 'ID', size: 1000 },
+      { accessorKey: 'name', header: 'Название', size: 1000 },
+    ]
+
+    render(
+      <DataGrid
+        columns={wideColumns}
+        rows={[]}
+        totalCount={0}
+      />,
+    )
+
+    const emptyState = screen.getByRole('status')
+    expect(emptyState.textContent).toBe('Нет данных для отображения')
+    expect(emptyState.classList.contains('min-w-0')).toBe(true)
+    expect(emptyState.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true')
+    expect(screen.queryByRole('table')).toBeNull()
+    expect(screen.queryByRole('columnheader')).toBeNull()
+    expect(screen.queryByRole('navigation')).toBeNull()
+    expect(screen.queryByText(/Показано/)).toBeNull()
+  })
+
+  it('keeps existing rows visible during a background update even when isLoading is set', () => {
+    render(
+      <DataGrid
+        columns={columns}
+        rows={rows}
+        totalCount={rows.length}
+        isLoading
+        isFetching
+      />,
+    )
+
+    expect(screen.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['Beta', 'Alpha'])
+    expect(screen.getByRole('table').querySelector('[data-slot="skeleton"]')).toBeNull()
+    expect(screen.queryByText('Нет данных для отображения')).toBeNull()
+    expect(screen.getByRole('status').textContent).toBe('Обновление данных...')
+    expect(screen.getByRole('table').closest('[aria-busy]')?.getAttribute('aria-busy')).toBe('true')
+  })
+
+  it('supports interactive ReactNode content in the empty state', () => {
+    const onCreate = vi.fn()
+
+    render(
+      <DataGrid
+        columns={columns}
+        rows={[]}
+        totalCount={0}
+        emptyContent={
+          <div>
+            <p>Пока пусто</p>
+            <Button onClick={onCreate}>Создать</Button>
+          </div>
+        }
+      />,
+    )
+
+    const action = screen.getByRole('button', { name: 'Создать' })
+    expect(action.closest('[role="status"]')).not.toBeNull()
+    fireEvent.click(action)
+    expect(onCreate).toHaveBeenCalledOnce()
+  })
+
+  it.each([5, 25])('keeps navigation back from an empty page with %i total rows', (totalCount) => {
+    const onPaginationChange = vi.fn<OnChangeFn<PaginationState>>()
+
+    render(
+      <DataGrid
+        columns={columns}
+        rows={[]}
+        totalCount={totalCount}
+        pagination={{ pageIndex: 3, pageSize: 10 }}
+        onPaginationChange={onPaginationChange}
+      />,
+    )
+
+    expect(screen.getByText(`Показано 0-0 из ${totalCount}`)).not.toBeNull()
+    expect(screen.getByRole('navigation')).not.toBeNull()
+    const previous = screen.getByRole('button', { name: 'Перейти на предыдущую страницу' })
+    expect(previous.getAttribute('aria-disabled')).toBe('false')
+    fireEvent.click(previous)
+    expect(onPaginationChange).toHaveBeenCalledOnce()
+    const updater = onPaginationChange.mock.calls[0]?.[0]
+    if (typeof updater === 'function') {
+      expect(updater({ pageIndex: 3, pageSize: 10 })).toEqual({ pageIndex: 2, pageSize: 10 })
+    } else {
+      throw new Error('Expected a functional pagination updater')
+    }
   })
 
   it('keeps nested actions separate from the row callback', () => {

@@ -4,6 +4,7 @@ export default {
   key: 'admin-layout',
   content: {
     templates: t({ ru: 'Шаблоны', en: 'Templates' }),
+    template: t({ ru: 'Шаблон', en: 'Template' }),
     navigation: t({ ru: 'Навигация', en: 'Navigation' }),
     logout: t({ ru: 'Выйти', en: 'Log out' }),
     adminPanel: t({ ru: 'Панель администратора', en: 'Admin panel' }),
