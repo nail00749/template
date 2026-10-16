@@ -1,0 +1,12 @@
+{
+  "name": "@template/braces",
+  "version": "3.0.3-hardened.0",
+  "private": true,
+  "description": "Locally maintained braces 3.0.3 with bounded AST nesting",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "index.js",
+  "dependencies": {
+    "fill-range": "^7.1.1"
+  }
+}

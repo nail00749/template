@@ -11,6 +11,7 @@
     ".intlayer/",
     "dist/",
     "node_modules/",
+    "vendor/",
     "bun.lock",
     "src/routeTree.gen.ts",
     "src/shared/api/*/endpoints/",

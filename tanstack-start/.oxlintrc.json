@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": [".intlayer/**"],
+  "ignorePatterns": [".intlayer/**", "vendor/**"],
   "jsPlugins": ["@shadcn/lint"],
   "overrides": [
     {

@@ -1,5 +1,5 @@
 import { intlayer } from 'vite-intlayer'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [intlayer()],
@@ -7,6 +7,7 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
+    exclude: [...configDefaults.exclude, 'scripts/braces-security.test.ts'],
     environment: 'jsdom',
     server: { deps: { inline: [/intlayer/] } },
   },

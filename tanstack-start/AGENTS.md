@@ -36,6 +36,7 @@ Base UI, Bun, Nitro, Vite 8.
 | File upload                            | `.docs/files.md`, `.docs/forms.md`, `.docs/api.md`           |
 | UI component or styling                | `.docs/ui.md`, `.docs/conventions.md`                        |
 | Git operation requested by the user    | `.docs/git.md`                                               |
+| Dependency or runtime update           | `.docs/dependencies.md`                                      |
 
 ## Local skills
 

@@ -11,7 +11,7 @@
     "test": "bun test ./scaffold/core.test.ts ./scaffold/cli.test.ts ./scaffold/features/keycloak-auth/overlay/src/shared/auth/post-login-redirect.test.ts"
   },
   "dependencies": {
-    "@clack/prompts": "^1.8.0"
+    "@clack/prompts": "^1.8.1"
   },
   "engines": {
     "bun": ">=1.2.0"
