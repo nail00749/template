@@ -246,7 +246,11 @@ async function runWithSpinner<T>(
   }
 }
 
-export async function runCli(args: Array<string>): Promise<void> {
+export async function runCli(
+  args: Array<string>,
+  generate: typeof scaffoldProject = scaffoldProject,
+  label = 'create-tanstack',
+): Promise<void> {
   const options = parseCliArgs(args)
   if (options.help) {
     printHelp()
@@ -255,7 +259,7 @@ export async function runCli(args: Array<string>): Promise<void> {
 
   const interactive = Boolean(process.stdin.isTTY && process.stdout.isTTY)
   if (interactive) {
-    intro('create-tanstack')
+    intro(label)
   }
 
   try {
@@ -263,7 +267,7 @@ export async function runCli(args: Array<string>): Promise<void> {
       if (!interactive) {
         throw new Error('Target directory is required in non-interactive mode')
       }
-      options.target = unwrapPrompt(
+      options.target = unwrapPrompt<string>(
         await text({
           message: 'Where should the project be created?',
           placeholder: './tanstack-app',
@@ -294,7 +298,7 @@ export async function runCli(args: Array<string>): Promise<void> {
 
       const features = await discoverFeatures(checkoutDirectory)
       if (options.featureIds === undefined && interactive && features.length > 0) {
-        options.featureIds = unwrapPrompt(
+        options.featureIds = unwrapPrompt<Array<string>>(
           await multiselect({
             message: 'Select features',
             options: features.map((feature) => ({
@@ -318,7 +322,7 @@ export async function runCli(args: Array<string>): Promise<void> {
 
       if (options.install === undefined) {
         options.install = interactive
-          ? unwrapPrompt(
+          ? unwrapPrompt<boolean>(
               await confirm({
                 message: 'Install dependencies with Bun?',
                 initialValue: true,
@@ -328,7 +332,7 @@ export async function runCli(args: Array<string>): Promise<void> {
       }
       if (options.initGit === undefined) {
         options.initGit = interactive
-          ? unwrapPrompt(
+          ? unwrapPrompt<boolean>(
               await confirm({
                 message: 'Initialize a fresh Git repository?',
                 initialValue: true,
@@ -338,7 +342,7 @@ export async function runCli(args: Array<string>): Promise<void> {
       }
 
       await runWithSpinner(interactive, 'Creating project', 'Project files created', () =>
-        scaffoldProject({
+        generate({
           checkoutDirectory,
           targetDirectory,
           featureIds: options.featureIds!,

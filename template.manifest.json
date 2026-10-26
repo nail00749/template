@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "tanstack",
+  "name": "TanStack Start",
+  "sourceRoot": "tanstack-start",
+  "renderer": { "id": "gvozdla-files", "version": 1 },
+  "groups": {
+    "ui": {
+      "description": "Shared UI components",
+      "include": ["src/shared/ui/**"],
+      "requires": ["utils"],
+      "update": "merge"
+    },
+    "utils": {
+      "description": "Shared utilities and hooks",
+      "include": ["src/shared/lib/**"],
+      "update": "merge"
+    },
+    "tooling": {
+      "description": "Formatting, lint and architecture rules",
+      "include": [
+        ".oxlintrc.json",
+        ".oxfmtrc.json",
+        ".oxfmtignore",
+        "scripts/check-architecture.ts"
+      ],
+      "update": "merge"
+    }
+  }
+}

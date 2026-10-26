@@ -25,6 +25,20 @@ Do not suppress the advisory or treat a clean registry audit as evidence that
 the private fork is secure. Keep the regression tests and inspect the patch.
 Replace the local fork when an upstream fixed release becomes available.
 
+## Security patches for pinned transitive dependencies
+
+The October 2026 audit requires shadcn 4.22.1 or newer within major 4; its
+registry uses Zod 4, so the application does not need a global Zod major override.
+Intlayer's config and backend-contract packages still pin Zod 4.6.5. Scoped
+overrides keep their Zod dependency on the patched 4.6.7 release. Scalar's
+json-magic package pins Undici 7.29.1; its scoped override uses patched Undici
+7.30.1 and preserves major 7 for that consumer. Other Undici consumers retain
+their own major versions. Keep these rules in both package-manager lockfiles,
+and remove each override when its parent dependency adopts a safe release.
+
+These are dependency replacements, not advisory suppressions. Verify fresh
+installs with both package managers and retain the existing audit gate.
+
 ## Verification
 
 Run frozen installation, registry audits, check, typecheck, test and build.
