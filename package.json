@@ -22,7 +22,9 @@
     "scaffold/gvozdla/state.ts",
     "scaffold/gvozdla/sync.ts",
     "template.manifest.json",
-    "docs/gvozdla-architecture.md"
+    "docs/gvozdla-architecture.md",
+    "docs/gvozdla-guide.md",
+    "docs/gvozdla-agents.md"
   ],
   "type": "module",
   "publishConfig": {
