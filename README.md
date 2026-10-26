@@ -4,6 +4,17 @@ A Bun CLI to create projects from Git templates, inspect local changes, and merg
 template updates. The first template is TanStack Start with optional feature overlays.
 Requires Bun >= 1.2 and Git.
 
+## Usage documentation
+
+- [Руководство для пользователей](docs/gvozdla-guide.md): установка, первый проект,
+  обновления, конфликты и устранение ошибок.
+- [Инструкции для AI-агентов](docs/gvozdla-agents.md): воспроизводимые команды,
+  JSON, коды завершения и правила работы с проектом.
+- [Architecture](docs/gvozdla-architecture.md): manifest, baselines and merge design.
+
+These guides describe the released gvozdla 0.1.0 commands. The new guide files will
+also be included in the next npm release; the existing npm 0.1.0 archive is unchanged.
+
 ## Installation
 
 With Bun and Git available on your PATH:
