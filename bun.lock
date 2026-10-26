@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@nail00749/tanstack-scaffold",
+      "name": "gvozdla",
       "dependencies": {
         "@clack/prompts": "^1.8.1",
       },

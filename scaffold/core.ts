@@ -29,6 +29,7 @@ export interface ScaffoldProjectOptions {
   targetDirectory: string
   featureIds: Array<string>
   source: TemplateSource
+  templatePath?: string
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -209,7 +210,8 @@ async function applyFeature(
 export async function scaffoldProject(options: ScaffoldProjectOptions): Promise<void> {
   const checkoutDirectory = resolve(options.checkoutDirectory)
   const targetDirectory = resolve(options.targetDirectory)
-  const templateDirectory = join(checkoutDirectory, TEMPLATE_PATH)
+  const templatePath = validateRelativePath(options.templatePath ?? TEMPLATE_PATH, 'Template path')
+  const templateDirectory = join(checkoutDirectory, templatePath)
 
   if (await pathExists(targetDirectory)) {
     throw new Error(`Target directory already exists: ${targetDirectory}`)
@@ -256,7 +258,7 @@ export async function scaffoldProject(options: ScaffoldProjectOptions): Promise<
           source: {
             repository: options.source.repository,
             ref: options.source.ref,
-            templatePath: TEMPLATE_PATH,
+            templatePath,
           },
           features: selectedFeatures.map((feature) => feature.id),
         },
@@ -293,11 +295,15 @@ export async function checkoutRepository(options: CheckoutRepositoryOptions): Pr
       options.repository,
       options.destination,
     ],
-    { stdout: 'inherit', stderr: 'pipe' },
+    { stdout: 'pipe', stderr: 'pipe' },
   )
-  const [exitCode, error] = await Promise.all([process.exited, new Response(process.stderr).text()])
+  const [exitCode, output, error] = await Promise.all([
+    process.exited,
+    new Response(process.stdout).text(),
+    new Response(process.stderr).text(),
+  ])
   if (exitCode !== 0) {
-    throw new Error(`Git clone failed: ${error.trim()}`)
+    throw new Error(`Git clone failed: ${error.trim() || output.trim()}`)
   }
 }
 

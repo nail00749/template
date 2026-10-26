@@ -3,14 +3,22 @@ name: CI
 on:
   pull_request:
     paths:
-      - "tanstack-start/**"
-      - ".github/workflows/ci.yml"
-      - "renovate.json5"
+      - 'scaffold/**'
+      - 'template.manifest.json'
+      - 'package.json'
+      - 'bun.lock'
+      - 'tanstack-start/**'
+      - '.github/workflows/ci.yml'
+      - 'renovate.json5'
   push:
     paths:
-      - "tanstack-start/**"
-      - ".github/workflows/ci.yml"
-      - "renovate.json5"
+      - 'scaffold/**'
+      - 'template.manifest.json'
+      - 'package.json'
+      - 'bun.lock'
+      - 'tanstack-start/**'
+      - '.github/workflows/ci.yml'
+      - 'renovate.json5'
 
 permissions:
   contents: read
@@ -20,6 +28,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  scaffold:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install CLI dependencies
+        run: bun ci --ignore-scripts
+      - name: Test gvozdla and legacy scaffold
+        run: bun run test
+
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
