@@ -1,6 +1,21 @@
 # Frontend skills
 
-These skills are scoped to `tanstack-start/`. Upstream files are kept unchanged, including their references.
+These skills are scoped to `tanstack-start/`.
+
+## Project task skills
+
+Written for this project: `new-screen`, `api-query`, `form`, `datagrid-table`,
+`dialog`, `file-upload`, `git-workflow`, `dependency-update`, `testing`,
+`review`. Each one holds the steps and a checklist for one kind of task and
+links the authoritative `.docs/*` contracts instead of copying them. When a `.docs/*` rule changes,
+update the matching skill's steps or checklist in the same change.
+`bun run check:skills` (part of `bun run check`) verifies every skill's `name`
+and `description` and fails on a broken local link in a project skill. They are not
+tracked in `sources.json`.
+
+## Upstream skills
+
+Upstream files are kept unchanged, including their references.
 
 - **shadcn**: [shadcn-ui/ui](https://github.com/shadcn-ui/ui/tree/5c7072da672b0048bc6771e3204063a2537df91a/skills/shadcn).
 - **feature-sliced-design**: [feature-sliced/skills](https://github.com/feature-sliced/skills/tree/e7eac044ee7405b0e82abe8e54cab7a1e9e8bc0c/feature-sliced-design).
@@ -17,3 +32,6 @@ Run UI CLI commands inside `tanstack-start/`, where `components.json` lives.
 Codex discovers repository `.agents/skills` from the working directory and its
 ancestors. Launch frontend tasks from `tanstack-start/` (or a child directory)
 to discover these skills. They are not installed at the repository root.
+
+Claude Code reads `tanstack-start/.claude/skills`, a symlink to this directory,
+so both agents share one copy. Launch Claude Code from `tanstack-start/` too.

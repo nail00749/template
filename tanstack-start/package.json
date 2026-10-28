@@ -6,16 +6,17 @@
     "dev": "vite dev --port 3000",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run --passWithNoTests && bun test scripts/braces-security.test.ts",
+    "test": "vitest run --passWithNoTests && bun test scripts/braces-security.test.ts scripts/deepmerge-security.test.ts",
     "lint": "oxlint",
     "format": "oxfmt .",
-    "check": "oxfmt --check . && oxlint && bun run check:architecture && bun run i18n:check",
+    "check": "oxfmt --check . && oxlint && bun run check:architecture && bun run check:skills && bun run i18n:check",
     "fix": "oxfmt --write . && oxlint --fix",
     "i18n:build": "intlayer build",
     "i18n:check": "bun run i18n:build && intlayer test",
     "typecheck": "bun run i18n:build && tsc --noEmit",
     "generate-api": "bunx orval",
-    "check:architecture": "bun scripts/check-architecture.ts"
+    "check:architecture": "bun scripts/check-architecture.ts",
+    "check:skills": "bun scripts/check-skills.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -68,6 +69,7 @@
     "ajv": "^8.20.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "braces": "file:vendor/braces",
+    "deepmerge": "file:vendor/deepmerge",
     "jsdom": "^30.1.2",
     "orval": "^8.42.0",
     "oxfmt": "^0.73.0",
@@ -89,7 +91,9 @@
       "undici": "7.30.1"
     },
     "braces": "$braces",
-    "js-yaml": "4.3.2"
+    "deepmerge": "$deepmerge",
+    "js-yaml": "4.3.2",
+    "qs": "6.17.0"
   },
   "packageManager": "bun@1.4.3"
 }

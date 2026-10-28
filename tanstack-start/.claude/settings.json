@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun run check)",
+      "Bash(bun run check:architecture)",
+      "Bash(bun run check:skills)",
+      "Bash(bun run i18n:check)",
+      "Bash(bun run lint)",
+      "Bash(bun run typecheck)",
+      "Bash(bun run test)",
+      "Bash(bun run build)",
+      "Bash(bunx vitest run:*)",
+      "Bash(bunx oxfmt --check:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-generated.ts"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-file.ts"
+          }
+        ]
+      }
+    ]
+  }
+}
