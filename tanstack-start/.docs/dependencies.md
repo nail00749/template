@@ -33,7 +33,9 @@ Intlayer's config and backend-contract packages still pin Zod 4.6.5. Scoped
 overrides keep their Zod dependency on the patched 4.6.7 release. Scalar's
 json-magic package pins Undici 7.29.1; its scoped override uses patched Undici
 7.30.1 and preserves major 7 for that consumer. Other Undici consumers retain
-their own major versions. Keep these rules in both package-manager lockfiles,
+their own major versions. Express and body-parser (via shadcn's MCP SDK) resolve
+qs 6.16.x, affected by GHSA-6pq8-jhm2-2vcw; the `qs` override pins patched
+6.17.0 within major 6. Keep these rules in both package-manager lockfiles,
 and remove each override when its parent dependency adopts a safe release.
 
 These are dependency replacements, not advisory suppressions. Verify fresh
