@@ -16,14 +16,30 @@ The fork retains its MIT license and normal glob behavior, but rejects AST
 nesting deeper than 128 before recursive parsing/compilation/expansion.
 The provenance and mitigation limits are documented in `vendor/braces/README.md`.
 
-`bun run test` runs both the application Vitest suite and the dedicated Bun
-security suite. Verify fresh Bun and npm installs: existing node_modules can
-contain unused upstream copies. Tests resolve braces from its actual micromatch
-consumer to check that the override is effective.
+## Local deepmerge security fix
 
-Do not suppress the advisory or treat a clean registry audit as evidence that
-the private fork is secure. Keep the regression tests and inspect the patch.
-Replace the local fork when an upstream fixed release becomes available.
+`devDependencies.deepmerge` uses `file:vendor/deepmerge`, and
+`overrides.deepmerge` references it with `$deepmerge`, in the same way as braces.
+The private package is the `@template/deepmerge@4.3.1-hardened.0` fork.
+Upstream deepmerge 4.3.1 has no published fix for
+[GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4); shadcn,
+`@shadcn/registry` and the `@svgr/*` plugins all require `^4.3.1`. The fork
+copies the published CommonJS build and never writes an own `__proto__` key to
+a merge result. The provenance and mitigation limits are documented in
+`vendor/deepmerge/README.md`.
+
+## Security suites for local forks
+
+`bun run test` runs the application Vitest suite and the dedicated Bun
+security suites (`scripts/braces-security.test.ts`,
+`scripts/deepmerge-security.test.ts`). Verify fresh Bun and npm installs:
+existing node_modules can contain unused upstream copies. Tests resolve each
+fork from its actual transitive consumers (micromatch; shadcn, `@shadcn/registry`
+and `@svgr/*`) to check that the override is effective.
+
+Do not suppress the advisories or treat a clean registry audit as evidence that
+a private fork is secure. Keep the regression tests and inspect the patch.
+Replace each local fork when an upstream fixed release becomes available.
 
 ## Security patches for pinned transitive dependencies
 

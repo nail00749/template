@@ -3,7 +3,7 @@ name: dependency-update
 description: >
   Update dependencies, Bun, Node, Nitro or TypeScript in the tanstack-start
   frontend, or handle a dependency security advisory. Covers both lockfiles,
-  the vendored braces fork, scoped overrides and the verification matrix.
+  the vendored braces and deepmerge forks, scoped overrides and the verification matrix.
 ---
 
 # Dependency update
@@ -13,7 +13,7 @@ Background for larger upgrades: [docs/dependency-modernization-guide.md](../../.
 
 ## Steps
 
-1. Read the current overrides and the `vendor/braces` notes before changing
+1. Read the current overrides and the `vendor/*/README.md` notes before changing
    versions; do not remove an override until its parent ships a safe release.
 2. Update `package.json`, then refresh both `bun.lock` and `package-lock.json`.
 3. Bun version changes: update `packageManager` and the development Docker
@@ -24,7 +24,9 @@ Background for larger upgrades: [docs/dependency-modernization-guide.md](../../.
 
 - [ ] `bun.lock` and `package-lock.json` match the manifest
 - [ ] Node types stay on the Dockerfile.node major
-- [ ] No advisory suppressed; braces regression tests kept
+- [ ] No advisory suppressed; fork regression tests kept
+- [ ] A new local fork gets `vendor/<name>`, a `$<name>` override, a Bun
+      security suite and a section in `.docs/dependencies.md`
 - [ ] Fresh Bun and npm installs verified, npm/Node build in an isolated directory
 
 ## Verify

@@ -7,7 +7,11 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   test: {
-    exclude: [...configDefaults.exclude, 'scripts/braces-security.test.ts'],
+    exclude: [
+      ...configDefaults.exclude,
+      'scripts/braces-security.test.ts',
+      'scripts/deepmerge-security.test.ts',
+    ],
     environment: 'jsdom',
     server: { deps: { inline: [/intlayer/] } },
   },

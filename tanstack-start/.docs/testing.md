@@ -7,8 +7,9 @@
 - **Vitest** (`vitest.config.ts`) — application tests in `src/**` and script
   tests in `scripts/**`. Environment `jsdom`, `@/` paths from `tsconfig.json`,
   the Intlayer plugin with its packages inlined so dictionaries resolve.
-- **Bun test** — only `scripts/braces-security.test.ts`, excluded from Vitest.
-  See `.docs/dependencies.md`.
+- **Bun test** — only the security suites for local forks
+  (`scripts/braces-security.test.ts`, `scripts/deepmerge-security.test.ts`),
+  excluded from Vitest. See `.docs/dependencies.md`.
 
 Run one file while iterating: `bunx vitest run src/shared/ui/DataGrid.test.tsx`.
 
