@@ -3,7 +3,8 @@
 Before every task:
 
 1. Read this file completely.
-2. Read only the topic documents required by the table below.
+2. Load the matching task skill and read the topic documents it lists (see the
+   table below).
 3. Inspect the affected code and nearby public APIs before creating new code.
 4. Preserve unrelated changes and keep the implementation minimal.
 5. Run the checks appropriate for the changed behavior before reporting completion.
@@ -11,8 +12,8 @@ Before every task:
 Failure to follow these rules is a bug.
 
 **Source of truth:** this file is an index. `.docs/*` is authoritative for each
-topic. When a rule changes, update its topic document first and keep only the
-short invariant here.
+topic. When a rule changes, update its topic document first, then the matching
+task skill's steps/checklist, and keep only the short invariant here.
 
 ## Project
 
@@ -21,26 +22,34 @@ Frontend for Proback Legal Platform.
 Stack: React 19, TanStack Start/Router/Query, Tailwind CSS v4, shadcn/ui,
 Base UI, Bun, Nitro, Vite 8.
 
-## Documentation selection
+## Task skills and documentation
 
-| Task                                   | Read                                                         |
-| -------------------------------------- | ------------------------------------------------------------ |
-| Any structural change or new screen    | `.docs/architecture.md`, `.docs/conventions.md`              |
-| Route, loader, redirect, search params | `.docs/router.md`, `.docs/start.md`                          |
-| Query, mutation, generated endpoint    | `.docs/api.md`, `.docs/error-handling.md`                    |
-| Authentication/session                 | `.docs/auth.md`, `.docs/error-handling.md`, `.docs/start.md` |
-| User-facing text, localization         | `.docs/i18n.md`                                              |
-| Form                                   | `.docs/forms.md`, `.docs/ui.md`, `.docs/error-handling.md`   |
-| Dialog                                 | `.docs/dialogs.md`, `.docs/ui.md`                            |
-| Table/list                             | `.docs/datagrid.md`, `.docs/router.md`, `.docs/api.md`       |
-| File upload                            | `.docs/files.md`, `.docs/forms.md`, `.docs/api.md`           |
-| UI component or styling                | `.docs/ui.md`, `.docs/conventions.md`                        |
-| Git operation requested by the user    | `.docs/git.md`                                               |
-| Dependency or runtime update           | `.docs/dependencies.md`                                      |
+Task skills live in `.agents/skills/` (`.claude/skills` is a symlink to it).
+Each skill gives the steps and a checklist and links the `.docs/*` contracts;
+it never replaces them. Claude Code reads this file through `CLAUDE.md` and runs
+the hooks in `.claude/settings.json`: hand edits of generated files are blocked
+and edited files are formatted with oxfmt. The same file allows the read-only
+check commands without a prompt. `bun run check` includes `check:skills`, which
+validates skill frontmatter and every local link in project skills.
 
-## Local skills
+| Task                                  | Skill                                                          | Read                                                                                 |
+| ------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| New screen, route, loader, FSD slice  | [new-screen](.agents/skills/new-screen/SKILL.md)               | `.docs/architecture.md`, `.docs/conventions.md`, `.docs/router.md`, `.docs/start.md` |
+| Query, mutation, generated endpoint   | [api-query](.agents/skills/api-query/SKILL.md)                 | `.docs/api.md`, `.docs/error-handling.md`                                            |
+| Form                                  | [form](.agents/skills/form/SKILL.md)                           | `.docs/forms.md`, `.docs/ui.md`, `.docs/error-handling.md`                           |
+| Table/list                            | [datagrid-table](.agents/skills/datagrid-table/SKILL.md)       | `.docs/datagrid.md`, `.docs/router.md`, `.docs/api.md`                               |
+| Dialog                                | [dialog](.agents/skills/dialog/SKILL.md)                       | `.docs/dialogs.md`, `.docs/ui.md`                                                    |
+| File upload                           | [file-upload](.agents/skills/file-upload/SKILL.md)             | `.docs/files.md`, `.docs/forms.md`, `.docs/api.md`                                   |
+| Git operation requested by the user   | [git-workflow](.agents/skills/git-workflow/SKILL.md)           | `.docs/git.md`                                                                       |
+| Dependency or runtime update          | [dependency-update](.agents/skills/dependency-update/SKILL.md) | `.docs/dependencies.md`                                                              |
+| Writing or fixing tests               | [testing](.agents/skills/testing/SKILL.md)                     | `.docs/testing.md`                                                                   |
+| Review before commit/PR or completion | [review](.agents/skills/review/SKILL.md)                       | checklists of the skills above                                                       |
+| Authentication/session                | —                                                              | `.docs/auth.md`, `.docs/error-handling.md`, `.docs/start.md`                         |
+| User-facing text, localization        | —                                                              | `.docs/i18n.md`                                                                      |
+| UI component or styling               | shadcn                                                         | `.docs/ui.md`, `.docs/conventions.md`                                                |
+| Any structural change                 | feature-sliced-design (placement questions only)               | `.docs/architecture.md`, `.docs/conventions.md`                                      |
 
-Repository skills live in `.agents/skills/`:
+## Upstream skills
 
 - [shadcn](.agents/skills/shadcn/SKILL.md): component APIs, composition,
   registry operations and styling when working on shadcn UI.
@@ -113,6 +122,8 @@ Regenerate API files with `bun run generate-api`. Generated output is not a
 place for handwritten query wrappers, hooks, or business logic.
 
 ## Tests
+
+How to write tests: `.docs/testing.md`.
 
 - Always run existing tests relevant to changed behavior.
 - Add a regression test for a bug fix when the behavior can be tested reliably.

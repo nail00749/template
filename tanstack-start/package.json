@@ -9,13 +9,14 @@
     "test": "vitest run --passWithNoTests && bun test scripts/braces-security.test.ts",
     "lint": "oxlint",
     "format": "oxfmt .",
-    "check": "oxfmt --check . && oxlint && bun run check:architecture && bun run i18n:check",
+    "check": "oxfmt --check . && oxlint && bun run check:architecture && bun run check:skills && bun run i18n:check",
     "fix": "oxfmt --write . && oxlint --fix",
     "i18n:build": "intlayer build",
     "i18n:check": "bun run i18n:build && intlayer test",
     "typecheck": "bun run i18n:build && tsc --noEmit",
     "generate-api": "bunx orval",
-    "check:architecture": "bun scripts/check-architecture.ts"
+    "check:architecture": "bun scripts/check-architecture.ts",
+    "check:skills": "bun scripts/check-skills.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
